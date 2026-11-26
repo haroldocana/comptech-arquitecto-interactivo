@@ -25,32 +25,32 @@ MODEL_ID = "gemini-2.5-flash"
 # ==========================================
 PRECIOS_LISTA_MULTI_CAPA = {
     "GCP": {
-        "Almacenamiento_DataWarehouse_TB_mes": 25.0,   # BigQuery + Cloud Storage
-        "Procesamiento_Compute_mes": 110.0,            # Cloud Run / GKE Autopilot
-        "Conectividad_Hibrida_VPN_mes": 115.0,         # Cloud VPN / Interconnect
-        "IAM_ZeroTrust_Identidades_mes": 65.0,         # Cloud IAM + Identity Platform
-        "Ciberseguridad_DLP_WAF_mes": 120.0,           # Cloud Armor + Sensitive Data Protection
-        "IA_LLM_Input_1M_tokens": 0.15,                # Vertex AI / Gemini
+        "Almacenamiento_DataWarehouse_TB_mes": 25.0,
+        "Procesamiento_Compute_mes": 110.0,
+        "Conectividad_Hibrida_VPN_mes": 115.0,
+        "IAM_ZeroTrust_Identidades_mes": 65.0,
+        "Ciberseguridad_DLP_WAF_mes": 120.0,
+        "IA_LLM_Input_1M_tokens": 0.15,
         "IA_LLM_Output_1M_tokens": 0.60,
         "Vector_DB_RAG_mes": 140.0
     },
     "AWS": {
-        "Almacenamiento_DataWarehouse_TB_mes": 30.0,   # S3 + Redshift Serverless
-        "Procesamiento_Compute_mes": 120.0,            # ECS Fargate / EKS
-        "Conectividad_Hibrida_VPN_mes": 130.0,         # AWS Site-to-Site VPN / Direct Connect
-        "IAM_ZeroTrust_Identidades_mes": 70.0,         # IAM Identity Center + Secrets Manager
-        "Ciberseguridad_DLP_WAF_mes": 135.0,           # AWS WAF + Macie + GuardDuty
-        "IA_LLM_Input_1M_tokens": 0.25,                # Amazon Bedrock
+        "Almacenamiento_DataWarehouse_TB_mes": 30.0,
+        "Procesamiento_Compute_mes": 120.0,
+        "Conectividad_Hibrida_VPN_mes": 130.0,
+        "IAM_ZeroTrust_Identidades_mes": 70.0,
+        "Ciberseguridad_DLP_WAF_mes": 135.0,
+        "IA_LLM_Input_1M_tokens": 0.25,
         "IA_LLM_Output_1M_tokens": 1.25,
         "Vector_DB_RAG_mes": 165.0
     },
     "Azure": {
-        "Almacenamiento_DataWarehouse_TB_mes": 28.0,   # Azure Data Lake + Microsoft Fabric
-        "Procesamiento_Compute_mes": 115.0,            # Azure Container Apps / AKS
-        "Conectividad_Hibrida_VPN_mes": 120.0,         # Azure VPN Gateway / ExpressRoute
-        "IAM_ZeroTrust_Identidades_mes": 68.0,         # Microsoft Entra ID P2 + Key Vault
-        "Ciberseguridad_DLP_WAF_mes": 130.0,           # Microsoft Purview + Defender for Cloud
-        "IA_LLM_Input_1M_tokens": 0.20,                # Azure OpenAI
+        "Almacenamiento_DataWarehouse_TB_mes": 28.0,
+        "Procesamiento_Compute_mes": 115.0,
+        "Conectividad_Hibrida_VPN_mes": 120.0,
+        "IAM_ZeroTrust_Identidades_mes": 68.0,
+        "Ciberseguridad_DLP_WAF_mes": 130.0,
+        "IA_LLM_Input_1M_tokens": 0.20,
         "IA_LLM_Output_1M_tokens": 0.80,
         "Vector_DB_RAG_mes": 155.0
     }
@@ -62,40 +62,37 @@ PRECIOS_LISTA_MULTI_CAPA = {
 
 class ServicioConsultoriaComptech(BaseModel):
     nombre: str
-    categoria: str          # Consultoría Marco/Políticas, Ingeniería Cloud/Datos, Ciberseguridad/IAM, Plataforma AIVO/MCP, Operación HIL
-    unidad: str             # Mes, Hora, Entregable Único
+    categoria: str
+    unidad: str
     precio_unitario_usd: float
     cantidad: float
 
 class ProyectoConsultoriaRequest(BaseModel):
+    tipo_escenario: str = "Proyecto Combinado Integral"
     informacion_cliente_libre: str
-    modulos_acoplados: List[str] = Field(
-        description="Lista de capas activadas: Almacenamiento y Datos, Procesamiento e Infraestructura, Conectividad On-Premise, Ciberseguridad y DLP, Arquitectura IAM, Licenciamiento Multi-Capa, Agentes IA y MCP, Marcos Técnicos y Políticas"
-    )
+    datos_pendientes_levantar: List[str] = []
+    modulos_acoplados: List[str]
     nube_preferida: str = "GCP"
-    estrategia_infraestructura: str = "Híbrida (Convivencia On-Premise + Migración Cloud)"
-    escenario_competitivo: str = "08 Equipo interno / CoE / No hacer nada"
+    escenario_competitivo: str = "08 Equipo interno, CoE o no hacer nada"
     modalidad_comptech: str = "Híbrido Comptech + VTO Cliente (Transferencia de conocimiento)"
     horizonte_boost: str = "Versión Acelerada BOOST (~4 meses: M1-M4)"
     servicios_comptech: List[ServicioConsultoriaComptech]
 
 class ComponenteMultiCapa(BaseModel):
-    capa_arquitectura: str = Field(
-        description="Almacenamiento y Datos | Procesamiento e Infraestructura | Conectividad On-Premise | Ciberseguridad | IAM y Control de Acceso | Licenciamiento | Orquestación Agéntica IA | Marcos y Gobierno"
-    )
+    capa_arquitectura: str
     proveedor_o_origen: str
     nombre_componente: str
-    referencia_funcional: str = Field(description="Qué hace exactamente en la arquitectura, cómo se acopla con las demás capas y qué problema resuelve")
-    detalle_licenciamiento_o_metrica: str = Field(description="Modelo de licenciamiento: por consumo, por usuario, vCPU/TB, suscripción o servicio de consultoría")
-    origen_tarifa: str = Field(description="Precio Lista Nube | Consultoría/Servicio Comptech | Existente On-Premise")
+    referencia_funcional: str
+    detalle_licenciamiento_o_metrica: str
+    origen_tarifa: str
     costo_implementacion_usd: float
     costo_mensual_usd: float
 
 class PoliticaYMarcoTecnico(BaseModel):
-    dominio: str = Field(description="Marco Técnico de Arquitectura (TOGAF/Cloud) | Política de Gobierno de IA (ISO 42001) | Política de IAM (Humanos y Agentes) | Política de Seguridad y Datos (ISO 27001/DLP)")
+    dominio: str
     nombre_entregable: str
     alcance_y_controles: str
-    modalidad_entrega: str = Field(description="Consultoría como Servicio Comptech (Entregable + Traspaso)")
+    modalidad_entrega: str
 
 class ComparativaProveedor(BaseModel):
     proveedor: str
@@ -123,12 +120,9 @@ class InformeConsultoriaIntegral(BaseModel):
     titulo_proyecto: str
     cliente_detectado: str
     resumen_ejecutivo_consultoria: str
-    diagrama_arquitectura_mermaid: str = Field(
-        description="Código válido Mermaid 'flowchart TB' con subgraphs para las capas acopladas (OnPremise, Conectividad_IAM, Datos_Storage, Procesamiento_Cloud, Seguridad_Gobierno, Agentes_IA). Sin paréntesis ni caracteres especiales dentro de etiquetas."
-    )
-    diagrama_flujo_trabajo_mermaid: str = Field(
-        description="Código válido Mermaid 'sequenceDiagram' mostrando el flujo completo con validación IAM, acceso a datos On-Premise/Cloud, procesamiento IA, controles DLP y auditoría."
-    )
+    supuestos_y_datos_por_validar: List[str] = Field(description="Lista de datos técnicos que quedaron sin confirmar en el levantamiento y supuestos aplicados para cotizar")
+    diagrama_arquitectura_mermaid: str
+    diagrama_flujo_trabajo_mermaid: str
     arquitectura_multi_capa: List[ComponenteMultiCapa]
     marcos_y_politicas_entregables: List[PoliticaYMarcoTecnico]
     comparativa_proveedores_cloud: List[ComparativaProveedor]
@@ -172,16 +166,21 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
         for s in req.servicios_comptech
     ])
 
+    pendientes_txt = ", ".join(req.datos_pendientes_levantar) if req.datos_pendientes_levantar else "Ninguno; todos los datos críticos fueron confirmados."
+
     contexto = f"""
-    FIRMA DE CONSULTORÍA: Comptech (Certificada ISO 9001 e ISO 27001; Marcos de referencia TOGAF e ISO 42001; Metodología BOOST: Build, Outcome, Optimize, Scale, Time)
-    MÓDULOS ACOPLADOS REQUERIDOS POR EL CLIENTE: {', '.join(req.modulos_acoplados)}
-    ESTRATEGIA INFRAESTRUCTURA: {req.estrategia_infraestructura}
+    FIRMA DE CONSULTORÍA: Comptech (Certificada ISO 9001 e ISO 27001; Marcos de referencia TOGAF e ISO 42001; Metodología BOOST)
+    ESCENARIO DE PROYECTO SELECCIONADO: {req.tipo_escenario}
+    MÓDULOS ACOPLADOS ACTIVOS: {', '.join(req.modulos_acoplados)}
     NUBE BASE PREFERIDA: {req.nube_preferida}
-    ESCENARIO COMPETITIVO DETECTADO: {req.escenario_competitivo}
+    ESCENARIO COMPETITIVO: {req.escenario_competitivo}
     MODALIDAD Y HORIZONTE: {req.modalidad_comptech} | {req.horizonte_boost}
 
-    LEVANTAMIENTO / INFORMACIÓN CRUDA DEL CLIENTE:
+    DATOS LEVANTADOS POR MÓDULO:
     {req.informacion_cliente_libre}
+
+    DATOS TÉCNICOS MARCADOS COMO PENDIENTES DE VALIDAR CON EL CLIENTE:
+    {pendientes_txt}
 
     SERVICIOS DE CONSULTORÍA Y PLATAFORMA COMPTECH (RESPETAR PRECIOS EXACTOS):
     {servicios_txt}
@@ -191,30 +190,22 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
     """
 
     try:
-        # AGENTE 1: Arquitecto Principal Multi-Capa (Infraestructura, Datos, Redes On-Prem, IAM, Ciberseguridad y Licenciamiento)
         ingenieria_integral = ejecutar_agente(
-            """Eres Principal Enterprise Architect especialista en infraestructura On-Premise y Cloud (GCP, AWS, Azure), 
-            Almacenamiento de Datos (Data Lakes/Warehouses), Procesamiento/Cómputo, Ciberseguridad (DLP, WAF, cifrado), 
-            IAM (Zero-Trust, RBAC/ABAC para usuarios y agentes de IA) y modelos de licenciamiento empresarial.
-            Acopla ÚNICAMENTE los módulos solicitados en 'modulos_acoplados', dimensiona cada capa con precios de lista reales 
-            e integra los servicios de consultoría de Comptech.""",
-            f"Diseña la arquitectura integral multi-capa, licenciamiento y políticas:\n{contexto}"
+            """Eres Principal Enterprise Architect especialista en Migraciones Cloud, Infraestructura Híbrida On-Premise, 
+            Almacenamiento de Datos, Ciberseguridad, IAM y Sistemas Agénticos de IA.
+            Acopla ÚNICAMENTE los módulos marcados en 'modulos_acoplados' bajo el escenario seleccionado. 
+            Si hay datos marcados como pendientes de validar, establece supuestos técnicos conservadores para poder cotizar.""",
+            f"Diseña la arquitectura integral, licenciamiento y políticas:\n{contexto}"
         )
 
-        # AGENTE 2: Director de Consultoría, Gobierno IA, FinOps y Preventa Competitiva Comptech
         sys_consolidacion = """Eres el Director de Consultoría Integral y Project Management en Comptech.
         Consolida el informe técnico, financiero y de gobierno en JSON.
         REGLAS ESTRICTAS:
-        1. Acopla los módulos seleccionados cubriendo Almacenamiento, Procesamiento, Conectividad On-Premise, Ciberseguridad, IAM, Licenciamiento de todas las capas, IA y Marcos Técnicos.
-        2. En 'marcos_y_politicas_entregables', define los entregables formales de consultoría como servicio:
-           - Marco Técnico de Arquitectura (basado en TOGAF y mejores prácticas Cloud/Híbridas)
-           - Política de Gobierno de IA (basada en ISO 42001, inventario, comité y evaluación de riesgos)
-           - Política de IAM y Control de Identidades (principio de mínimo privilegio para humanos, servidores MCP y agentes IA)
-           - Política de Ciberseguridad y Clasificación de Datos (ISO 27001, cifrado, DLP).
-        3. En 'diagrama_arquitectura_mermaid' usa 'flowchart TB' con subgraphs limpios según los módulos acoplados. Prohibido usar paréntesis () o caracteres especiales dentro de etiquetas de nodos.
-        4. En 'diagrama_flujo_trabajo_mermaid' usa 'sequenceDiagram' incluyendo explícitamente la validación IAM y controles de seguridad/datos en el flujo.
-        5. En 'inteligencia_competitiva', responde según el 'escenario_competitivo' con el diferenciador de Comptech y su pregunta trampa clave para el cliente.
-        6. Respeta exactamente los precios ingresados en 'servicios_comptech'."""
+        1. Enfoca el diseño y los diagramas estrictamente en el 'tipo_escenario' y 'modulos_acoplados' seleccionados.
+        2. Documenta en 'supuestos_y_datos_por_validar' qué datos faltan por confirmar en la próxima sesión de levantamiento y qué supuesto se usó para costear.
+        3. En 'diagrama_arquitectura_mermaid' usa 'flowchart TB' con subgraphs limpios según los módulos activos. Prohibido usar paréntesis () o caracteres especiales dentro de etiquetas de nodos.
+        4. En 'diagrama_flujo_trabajo_mermaid' usa 'sequenceDiagram' mostrando el flujo operativo acorde a los módulos activos.
+        5. Respeta exactamente los precios ingresados en 'servicios_comptech'."""
 
         resultado = ejecutar_agente(
             sys_consolidacion,
