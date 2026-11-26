@@ -1,269 +1,1033 @@
-import os
-import json
-from typing import List
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from google import genai
-from google.genai import types
-
-app = FastAPI(title="Comptech · Enterprise Architecture, Cybersecurity, AI & PM Studio")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-client = genai.Client()
-MODEL_ID = "gemini-2.5-flash"
-
-# ==========================================
-# 1. TARIFARIO MULTI-CAPA DE LISTA (USD)
-# ==========================================
-PRECIOS_LISTA_MULTI_CAPA = {
-    "GCP": {
-        "Almacenamiento_DataWarehouse_TB_mes": 25.0,
-        "Procesamiento_Compute_mes": 110.0,
-        "Conectividad_VPN_HA_mes": 115.0,
-        "Enlace_Dedicado_Interconnect_mes": 450.0,
-        "IAM_ZeroTrust_Identidades_mes": 65.0,
-        "Ciberseguridad_DLP_WAF_mes": 120.0,
-        "IA_LLM_Input_1M_tokens": 0.15,
-        "IA_LLM_Output_1M_tokens": 0.60,
-        "Vector_DB_RAG_mes": 140.0
-    },
-    "AWS": {
-        "Almacenamiento_DataWarehouse_TB_mes": 30.0,
-        "Procesamiento_Compute_mes": 120.0,
-        "Conectividad_VPN_HA_mes": 130.0,
-        "Enlace_Dedicado_DirectConnect_mes": 480.0,
-        "IAM_ZeroTrust_Identidades_mes": 70.0,
-        "Ciberseguridad_DLP_WAF_mes": 135.0,
-        "IA_LLM_Input_1M_tokens": 0.25,
-        "IA_LLM_Output_1M_tokens": 1.25,
-        "Vector_DB_RAG_mes": 165.0
-    },
-    "Azure": {
-        "Almacenamiento_DataWarehouse_TB_mes": 28.0,
-        "Procesamiento_Compute_mes": 115.0,
-        "Conectividad_VPN_HA_mes": 120.0,
-        "Enlace_Dedicado_ExpressRoute_mes": 460.0,
-        "IAM_ZeroTrust_Identidades_mes": 68.0,
-        "Ciberseguridad_DLP_WAF_mes": 130.0,
-        "IA_LLM_Input_1M_tokens": 0.20,
-        "IA_LLM_Output_1M_tokens": 0.80,
-        "Vector_DB_RAG_mes": 155.0
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comptech · Consultoría Integral Cloud, On-Premise, Ciberseguridad, Datos & IA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f5f4fa; color: #1e1b4b; }
+    .card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .btn-primary { background: #5b21b6; color: white; transition: all 0.2s; }
+    .btn-primary:hover { background: #4c1d95; }
+    .preset-active { background: #5b21b6; color: white; border-color: #5b21b6; }
+    .preset-idle { background: #f8fafc; color: #334155; border-color: #cbd5e1; }
+    .diagram-viewport { overflow: auto; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 18px 18px; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff; }
+      .card { box-shadow: none; border: 1px solid #d1d5db; break-inside: avoid; margin-bottom: 16px; }
     }
-}
+  </style>
+</head>
+<body class="min-h-screen pb-14">
 
-# ==========================================
-# 2. ESQUEMAS DE DATOS (PYDANTIC)
-# ==========================================
+  <!-- Navbar -->
+  <header class="bg-white border-b border-gray-200 px-6 py-3.5 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-700 to-indigo-950 text-white flex items-center justify-center font-bold text-lg shadow">C</div>
+        <div>
+          <div class="font-bold text-base leading-tight flex items-center gap-2">
+            <span>Comptech</span>
+            <span class="text-gray-300">|</span>
+            <span class="text-violet-700">Enterprise Architecture, Cybersecurity, AI & PMO Studio</span>
+          </div>
+          <div class="text-xs text-gray-500">Fundación Cloud · IAM · Conectividad · Ingeniería Agéntica · Riesgos y Alcance BOOST</div>
+        </div>
+      </div>
 
-class ServicioConsultoriaComptech(BaseModel):
-    nombre: str
-    categoria: str
-    unidad: str
-    precio_unitario_usd: float
-    cantidad: float
+      <div class="flex items-center gap-2 no-print">
+        <button onclick="exportarMarkdown()" id="btnMd" class="hidden px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-semibold hover:bg-gray-50">⬇️ Informe (.MD)</button>
+        <button onclick="window.print()" id="btnPdf" class="hidden btn-primary px-4 py-2 rounded-xl text-xs font-semibold shadow-sm">🖨️ Imprimir / Guardar PDF</button>
+      </div>
+    </div>
+  </header>
 
-class ProyectoConsultoriaRequest(BaseModel):
-    tipo_escenario: str = "Proyecto Combinado Integral"
-    informacion_cliente_libre: str
-    datos_pendientes_levantar: List[str] = []
-    modulos_acoplados: List[str]
-    nube_preferida: str = "GCP"
-    metodo_conexion_principal: str = "VPN IPsec HA + Google Workspace / Office 365"
-    escenario_competitivo: str = "08 Equipo interno, CoE o no hacer nada"
-    modalidad_comptech: str = "Híbrido Comptech + VTO Cliente (Transferencia de conocimiento)"
-    horizonte_boost: str = "Versión Acelerada BOOST (~4 meses: M1-M4)"
-    servicios_comptech: List[ServicioConsultoriaComptech]
+  <main class="max-w-7xl mx-auto px-6 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-class DisenoAgenteIA(BaseModel):
-    nombre_agente: str
-    proposito_negocio: str = Field(description="Objetivo exacto de negocio y problema que resuelve")
-    modelo_ia_y_herramientas: str = Field(description="Ej: Gemini 2.5 Flash + Vertex AI + Servidores MCP")
-    flujo_automatizacion_proceso: str = Field(description="Paso a paso de qué automatiza, disparadores, acciones y validación Human-in-the-loop")
-    consumo_estimado_mes: str = Field(description="Tokens estimados, llamadas API/MCP y costo mensual proyectado")
-    nivel_riesgo_ia: str = Field(description="Bajo | Medio | Alto")
+    <!-- ==========================================
+         PANEL IZQUIERDO: ESCENARIOS Y LEVANTAMIENTO TÉCNICO
+    =========================================== -->
+    <aside class="lg:col-span-5 space-y-5 no-print">
 
-class PasoFundacionCloudIAM(BaseModel):
-    orden: int
-    dominio_fundacion: str = Field(description="1. Organización y Carpetas | 2. Proyectos (Dev/QA/Prod) | 3. Usuarios y Service Accounts | 4. Permisos RBAC y Políticas de Seguridad | 5. Conectividad (VPN / Workspace / Office 365 / Interconnect)")
-    configuracion_tecnica: str
-    politicas_seguridad_aplicadas: str
-    tiempo_implementacion_dias: int
+      <!-- 1. Selector de Escenario -->
+      <div class="card p-5">
+        <span class="text-xs font-bold uppercase tracking-wider text-violet-700">1. Selecciona el Tipo de Consultoría</span>
+        <p class="text-[11px] text-gray-500 mt-0.5 mb-3">Activa un escenario o marca manualmente los módulos requeridos:</p>
 
-class ComponenteMultiCapa(BaseModel):
-    capa_arquitectura: str
-    proveedor_o_origen: str
-    nombre_componente: str
-    referencia_funcional: str
-    detalle_licenciamiento_o_metrica: str
-    origen_tarifa: str
-    costo_implementacion_usd: float
-    costo_mensual_usd: float
+        <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
+          <button type="button" onclick="aplicarEscenario('combinado')" id="btn-esc-combinado" class="p-2.5 rounded-xl border text-left preset-active">
+            <div>❖ Combinado Integral</div>
+            <div class="text-[10px] font-normal opacity-85">Fundación + Migración + IA + IAM</div>
+          </button>
+          <button type="button" onclick="aplicarEscenario('migracion')" id="btn-esc-migracion" class="p-2.5 rounded-xl border text-left preset-idle">
+            <div>🚚 Solo Migración Cloud</div>
+            <div class="text-[10px] font-normal opacity-85">Servidores, DB, Storage y Red</div>
+          </button>
+          <button type="button" onclick="aplicarEscenario('agentico')" id="btn-esc-agentico" class="p-2.5 rounded-xl border text-left preset-idle">
+            <div>🤖 Sistema Agéntico IA</div>
+            <div class="text-[10px] font-normal opacity-85">Arquetipos, Triggers, MCP y Consumo</div>
+          </button>
+          <button type="button" onclick="aplicarEscenario('infraestructura')" id="btn-esc-infraestructura" class="p-2.5 rounded-xl border text-left preset-idle">
+            <div>🏗️ Fundación & Seguridad</div>
+            <div class="text-[10px] font-normal opacity-85">Org, Proyectos, IAM y Enlaces</div>
+          </button>
+        </div>
 
-class PoliticaYMarcoTecnico(BaseModel):
-    dominio: str
-    nombre_entregable: str
-    alcance_y_controles: str
-    modalidad_entrega: str
+        <div class="mt-4 pt-3 border-t border-gray-100">
+          <div class="text-[11px] font-semibold text-gray-600 mb-2">Módulos acoplados:</div>
+          <div class="grid grid-cols-2 gap-1.5 text-[11px]" id="modulosContainer">
+            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+              <input type="checkbox" id="chk-migracion" data-target="sec-migracion" value="Migración de Cargas y Bases de Datos (On-Premise a Cloud)" checked onchange="toggleModulo(this)" class="accent-violet-700">
+              <span>🚚 Migración & Datos</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+              <input type="checkbox" id="chk-infra" data-target="sec-infra" value="Fundación Cloud (Org, Proyectos), Cómputo y Conectividad" checked onchange="toggleModulo(this)" class="accent-violet-700">
+              <span>⚙️ Fundación & Red</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+              <input type="checkbox" id="chk-agentico" data-target="sec-agentico" value="Sistema Agéntico IA, Automatización de Procesos y MCP" checked onchange="toggleModulo(this)" class="accent-violet-700">
+              <span>🤖 Agentes IA & Flujos</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+              <input type="checkbox" id="chk-seguridad" data-target="sec-seguridad" value="IAM (Usuarios/Permisos), Políticas de Seguridad y DLP" checked onchange="toggleModulo(this)" class="accent-violet-700">
+              <span>🛡️ IAM & Seguridad</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+              <input type="checkbox" id="chk-licencias" data-target="sec-licencias" value="Licenciamiento Multi-Capa y Consumo" checked onchange="toggleModulo(this)" class="accent-violet-700">
+              <span>📜 Licenciamiento</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+              <input type="checkbox" id="chk-marcos" data-target="sec-marcos" value="Marcos Técnicos de Arquitectura y Políticas Gobierno IA/IAM" checked onchange="toggleModulo(this)" class="accent-violet-700">
+              <span>📐 Marcos & Políticas</span>
+            </label>
+          </div>
+        </div>
+      </div>
 
-class RiesgoProyectoPM(BaseModel):
-    id_riesgo: str
-    categoria: str = Field(description="Técnico / Conectividad | Seguridad / IAM | Datos / Migración | Adopción / Negocio")
-    descripcion_riesgo: str
-    probabilidad_impacto: str = Field(description="Ej: Probabilidad Media · Impacto Alto")
-    plan_mitigacion_comptech: str
+      <!-- 2. Levantamiento Técnico por Módulo -->
+      <div class="card p-5 space-y-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-violet-700">2. Levantamiento Técnico, Conectividad y Alcance</span>
+          <p class="text-[11px] text-gray-500">Marca <span class="font-semibold text-violet-700">☑</span> si el dato está confirmado (si lo desmarcas, pasa a supuestos por validar):</p>
+        </div>
 
-class AlcanceYTerminosPM(BaseModel):
-    incluye_en_alcance: List[str]
-    excluye_del_alcance: List[str]
-    prerequisitos_cliente: List[str]
-    terminos_despliegue_y_entrega: str
-    sugerencias_estrategicas_consultor: List[str] = Field(description="Recomendaciones proactivas de arquitectura, optimización de costos y escalabilidad")
+        <!-- Contexto Cliente y Método de Conexión -->
+        <div class="border border-gray-200 rounded-xl p-3.5 bg-gray-50/70 space-y-2.5">
+          <div class="text-xs font-bold text-gray-900">🏢 Cliente, Nube y Método de Conexión</div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Empresa / Cliente</label>
+              <input type="text" id="cli_empresa" value="Corporación Financiera y Logística del Sur" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Usuarios Totales / Concurrentes</label>
+              <input type="text" id="cli_usuarios" value="550 totales / 180 concurrentes" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+          </div>
 
-class ComparativaProveedor(BaseModel):
-    proveedor: str
-    es_recomendado: bool
-    justificacion_integral: str
-    inversion_implementacion_usd: float
-    costo_recurrente_mensual_usd: float
-    tco_anual_usd: float
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Nube Principal</label>
+              <select id="nube_preferida" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white">
+                <option value="GCP">Google Cloud (GCP)</option>
+                <option value="AWS">Amazon Web Services (AWS)</option>
+                <option value="Azure">Microsoft Azure</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Horizonte BOOST</label>
+              <select id="horizonte_boost" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white">
+                <option value="Versión Acelerada BOOST (~4 meses: M1-M4)">Acelerado (~4 meses)</option>
+                <option value="Roadmap Referencia (12 meses)">Referencia (12 meses)</option>
+              </select>
+            </div>
+          </div>
 
-class EstrategiaCompetitivaComptech(BaseModel):
-    arquetipo_competidor: str
-    en_que_gana_comptech: str
-    riesgo_a_vigilar: str
-    frase_posicionamiento: str
-    pregunta_trampa_clave: str
+          <div>
+            <label class="block text-[11px] font-bold text-violet-950 mb-0.5">🔌 Forma de Conexión e Identidad (Red & Suites)</label>
+            <select id="metodo_conexion_principal" class="w-full border border-violet-300 rounded-lg px-2.5 py-1.5 text-xs bg-white">
+              <option value="Híbrida: VPN IPsec HA On-Premise + Google Workspace (Identidad y MCP)">VPN IPsec HA On-Premise + Google Workspace</option>
+              <option value="Híbrida: VPN IPsec HA On-Premise + Microsoft Office 365 / Entra ID">VPN IPsec HA On-Premise + Office 365 / Entra ID</option>
+              <option value="Enlace Dedicado a Nube (Cloud Interconnect / Direct Connect) + Workspace/O365">Enlace Dedicado a Nube (Interconnect) + Suites</option>
+              <option value="Cloud-Native vía Google Workspace (APIs/MCP sin VPN on-premise)">Solo Google Workspace (Cloud-Native)</option>
+              <option value="Cloud-Native vía Microsoft Office 365 / Graph API (sin VPN on-premise)">Solo Microsoft Office 365 (Cloud-Native)</option>
+            </select>
+          </div>
 
-class FaseProjectManagement(BaseModel):
-    fase_boost: str
-    duracion: str
-    entregables_multi_capa: List[str]
-    hito_formal: str
-    responsables_raci: str
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Competencia Detectada</label>
+              <select id="escenario_competitivo" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white">
+                <option value="08 Equipo interno, CoE o no hacer nada">08 · Equipo interno / CoE</option>
+                <option value="07 Herramientas sueltas y SaaS">07 · SaaS sueltos (Copilot/Gemini)</option>
+                <option value="06 Controles nativos (Purview/Guardrails)">06 · Controles nativos</option>
+                <option value="05 Plataformas de gobierno de IA">05 · Plataformas Gobierno IA</option>
+                <option value="04 Boutiques de gobierno (Solo papel)">04 · Boutiques (Solo documento)</option>
+                <option value="03 Partners de licencias">03 · Partners de licencias</option>
+                <option value="02 Integradores tradicionales">02 · Integradores tradicionales</option>
+                <option value="01 Consultoras globales (Big Four)">01 · Consultoras globales</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Modalidad Comptech</label>
+              <select id="modalidad_comptech" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white">
+                <option value="Híbrido Comptech + VTO Cliente (Transferencia)">Híbrido + Transferencia</option>
+                <option value="Comptech ejecuta el 100%">Comptech ejecuta el 100%</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-class InformeConsultoriaIntegral(BaseModel):
-    titulo_proyecto: str
-    cliente_detectado: str
-    resumen_ejecutivo_consultoria: str
-    supuestos_y_datos_por_validar: List[str]
-    diagrama_arquitectura_mermaid: str
-    diagrama_flujo_trabajo_mermaid: str
-    diseno_agentes_y_automatizacion: List[DisenoAgenteIA]
-    fundacion_cloud_iam_y_conectividad: List[PasoFundacionCloudIAM]
-    arquitectura_multi_capa: List[ComponenteMultiCapa]
-    marcos_y_politicas_entregables: List[PoliticaYMarcoTecnico]
-    alcance_terminos_y_sugerencias: AlcanceYTerminosPM
-    matriz_riesgos_pm: List[RiesgoProyectoPM]
-    comparativa_proveedores_cloud: List[ComparativaProveedor]
-    inteligencia_competitiva: EstrategiaCompetitivaComptech
-    cronograma_pm_boost: List[FaseProjectManagement]
-    total_implementacion_usd: float
-    total_mensual_usd: float
-    tco_anual_usd: float
+        <!-- BLOQUE C: CONSTRUCTOR ESTRUCTURADO DE AGENTES IA -->
+        <div id="sec-agentico" class="border border-violet-300 rounded-xl p-3.5 bg-violet-50/40 space-y-2.5">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-xs font-bold text-violet-950">🤖 Ingeniería de Agentes IA (Por Tipo de Automatización)</div>
+              <div class="text-[10px] text-gray-600">Define cada agente según su arquetipo, disparador, sistemas y autonomía:</div>
+            </div>
+            <button type="button" onclick="agregarAgente()" class="px-2.5 py-1 rounded-lg bg-violet-700 text-white text-[11px] font-semibold hover:bg-violet-800">+ Agregar Agente</button>
+          </div>
 
-# ==========================================
-# 3. ORQUESTACIÓN MULTI-AGENTE FULL-STACK
-# ==========================================
+          <div id="agentesBuilderList" class="space-y-3"></div>
+        </div>
 
-def ejecutar_agente(system_instruction: str, prompt: str, schema=None):
-    config = types.GenerateContentConfig(
-        system_instruction=system_instruction,
-        temperature=0.15,
-    )
-    if schema:
-        config.response_mime_type = "application/json"
-        config.response_schema = schema
+        <!-- BLOQUE B: FUNDACIÓN CLOUD, ORGANIZACIÓN, PROYECTOS Y RED -->
+        <div id="sec-infra" class="border border-violet-200 rounded-xl p-3.5 bg-violet-50/30 space-y-2">
+          <div class="text-xs font-bold text-violet-950">⚙️ Fundación Cloud (Organización, Proyectos y Red)</div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="flex items-center gap-1.5 text-[11px] text-gray-700 mb-0.5">
+                <input type="checkbox" class="dato-check accent-violet-700" data-label="Dominio corporativo para creación de Organización y Carpetas" checked>
+                <span>Dominio y Estructura Proyectos</span>
+              </label>
+              <input type="text" id="inf_ambientes" value="Dominio corporativo · Carpetas y Proyectos Dev / QA / Prod" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+            <div>
+              <label class="flex items-center gap-1.5 text-[11px] text-gray-700 mb-0.5">
+                <input type="checkbox" class="dato-check accent-violet-700" data-label="Capacidad de cómputo (vCPU/RAM) y SLA requerido" checked>
+                <span>Cómputo y SLA</span>
+              </label>
+              <input type="text" id="inf_computo" value="16 vCPU / 64 GB RAM Serverless · SLA 99.9%" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+            <div class="col-span-2">
+              <label class="flex items-center gap-1.5 text-[11px] text-gray-700 mb-0.5">
+                <input type="checkbox" class="dato-check accent-violet-700" data-label="Ancho de banda y direccionamiento IP para VPN o Enlace Dedicado" checked>
+                <span>Detalle Técnico de Red (IPs, Ancho de Banda, Firewall)</span>
+              </label>
+              <input type="text" id="inf_red" value="Subredes privadas sin solapamiento IP · 500 Mbps · Cloud NAT y Firewall" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+          </div>
+        </div>
 
-    response = client.models.generate_content(
-        model=MODEL_ID,
-        contents=prompt,
-        config=config
-    )
-    return response.text
+        <!-- BLOQUE D: USUARIOS, PERMISOS IAM Y POLÍTICAS DE SEGURIDAD -->
+        <div id="sec-seguridad" class="border border-violet-200 rounded-xl p-3.5 bg-violet-50/30 space-y-2">
+          <div class="text-xs font-bold text-violet-950">🛡️ Usuarios, Permisos IAM y Políticas de Seguridad</div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="flex items-center gap-1.5 text-[11px] text-gray-700 mb-0.5">
+                <input type="checkbox" class="dato-check accent-violet-700" data-label="Federación de usuarios y grupos (SSO / MFA)" checked>
+                <span>Usuarios y Roles IAM</span>
+              </label>
+              <input type="text" id="seg_idp" value="SSO/MFA federado · Roles Admin, Auditor, Operador y Service Accounts" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+            <div>
+              <label class="flex items-center gap-1.5 text-[11px] text-gray-700 mb-0.5">
+                <input type="checkbox" class="dato-check accent-violet-700" data-label="Clasificación de datos y cumplimiento normativo" checked>
+                <span>Normativa y Datos</span>
+              </label>
+              <input type="text" id="seg_norma" value="Financiero y PII · ISO 27001 / Ley Protección Datos" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+            <div class="col-span-2">
+              <label class="flex items-center gap-1.5 text-[11px] text-gray-700 mb-0.5">
+                <input type="checkbox" class="dato-check accent-violet-700" data-label="Políticas organizacionales, DLP, cifrado KMS y perímetro" checked>
+                <span>Políticas de Seguridad Contempladas</span>
+              </label>
+              <input type="text" id="seg_controles" value="Org Policies restrictivas, DLP en prompts/salidas, Cifrado KMS, VPC Service Controls y Logs" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+          </div>
+        </div>
 
-@app.get("/api/tarifario-multi-capa")
-async def obtener_tarifario():
-    return PRECIOS_LISTA_MULTI_CAPA
+        <!-- BLOQUE A: MIGRACIÓN Y ALMACENAMIENTO -->
+        <div id="sec-migracion" class="border border-violet-200 rounded-xl p-3.5 bg-violet-50/30 space-y-2">
+          <div class="text-xs font-bold text-violet-950">🚚 Migración y Almacenamiento de Datos</div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="flex items-center gap-1.5 text-[11px] text-gray-700 mb-0.5">
+                <input type="checkbox" class="dato-check accent-violet-700" data-label="Servidores y motores DB origen" checked>
+                <span>Origen (Servidores / DB)</span>
+              </label>
+              <input type="text" id="mig_origen" value="4 VMs + Oracle 19c y SQL Server 2019" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+            <div>
+              <label class="flex items-center gap-1.5 text-[11px] text-gray-700 mb-0.5">
+                <input type="checkbox" class="dato-check accent-violet-700" data-label="Volumen en TB y ventana RPO/RTO" checked>
+                <span>Volumen y RPO/RTO</span>
+              </label>
+              <input type="text" id="mig_volumen" value="2.5 TB + 60 GB/mes · RPO 1h / RTO 2h" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+            </div>
+          </div>
+        </div>
 
-@app.post("/api/generar-consultoria-integral", response_model=InformeConsultoriaIntegral)
-async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
-    if not os.environ.get("GEMINI_API_KEY"):
-        raise HTTPException(status_code=500, detail="Falta configurar GEMINI_API_KEY en Render.")
+        <!-- BLOQUE E y F: LICENCIAMIENTO Y MARCOS -->
+        <div id="sec-licencias" class="border border-violet-200 rounded-xl p-3.5 bg-violet-50/30 space-y-2">
+          <div class="text-xs font-bold text-violet-950">📜 Licenciamiento Multi-Capa</div>
+          <input type="text" id="lic_detalle" value="Tienen Workspace/M365; cotizar consumo Cloud, DB, Tokens LLM, Enlaces y Conectores MCP" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+        </div>
 
-    servicios_txt = "\n".join([
-        f"- {s.nombre} [{s.categoria}]: ${s.precio_unitario_usd} USD / {s.unidad} x {s.cantidad} = ${s.precio_unitario_usd * s.cantidad:.2f} USD"
-        for s in req.servicios_comptech
-    ])
+        <div id="sec-marcos" class="border border-violet-200 rounded-xl p-3.5 bg-violet-50/30 space-y-2">
+          <div class="text-xs font-bold text-violet-950">📐 Marcos Técnicos y Políticas</div>
+          <input type="text" id="mar_lista" value="Marco Técnico Arquitectura (TOGAF), Política Gobierno IA (ISO 42001), Política IAM y Seguridad (ISO 27001)" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+        </div>
 
-    pendientes_txt = ", ".join(req.datos_pendientes_levantar) if req.datos_pendientes_levantar else "Ninguno; datos críticos confirmados."
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-700 mb-1">Restricciones o Exclusiones Específicas del Cliente</label>
+          <textarea id="notas_adicionales" rows="2" placeholder="Ej: No se migra el core contable en esta fase; despliegue solo en región us-east1..." class="w-full border border-gray-300 rounded-xl p-2.5 text-xs bg-white"></textarea>
+        </div>
+      </div>
 
-    contexto = f"""
-    FIRMA DE CONSULTORÍA: Comptech (Certificada ISO 9001 e ISO 27001; Marcos de referencia TOGAF e ISO 42001; Metodología BOOST)
-    ESCENARIO DE PROYECTO: {req.tipo_escenario}
-    MÓDULOS ACOPLADOS: {', '.join(req.modulos_acoplados)}
-    NUBE PRINCIPAL: {req.nube_preferida}
-    MÉTODO DE CONEXIÓN E IDENTIDAD SELECCIONADO: {req.metodo_conexion_principal}
-    ESCENARIO COMPETITIVO: {req.escenario_competitivo}
-    MODALIDAD Y HORIZONTE: {req.modalidad_comptech} | {req.horizonte_boost}
+      <!-- 3. Costeo Consultoría Comptech -->
+      <div class="card p-5">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-violet-700">3. Tarifas Consultoría y Servicios Comptech</span>
+          <button onclick="agregarServicio()" class="text-[11px] font-semibold text-violet-700 hover:underline">+ Añadir ítem</button>
+        </div>
+        <div id="serviciosComptechList" class="space-y-2 text-xs"></div>
 
-    DATOS TÉCNICOS LEVANTADOS:
-    {req.informacion_cliente_libre}
+        <button onclick="generarConsultoriaIntegral()" id="btnGenerar" class="mt-5 w-full btn-primary py-3 px-4 rounded-xl font-semibold text-sm shadow-md">
+          ✦ Generar Informe Completo (Arquitectura, Agentes, IAM y PM)
+        </button>
+      </div>
+    </aside>
 
-    DATOS PENDIENTES POR VALIDAR:
-    {pendientes_txt}
+    <!-- ==========================================
+         PANEL DERECHO: INFORME INTEGRAL DE INGENIERÍA Y PM
+    =========================================== -->
+    <section class="lg:col-span-7 space-y-6">
 
-    SERVICIOS COMPTECH (RESPETAR PRECIOS EXACTOS):
-    {servicios_txt}
+      <div id="emptyState" class="card p-16 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-violet-100 text-violet-700 mx-auto flex items-center justify-center font-bold text-2xl mb-4">❖</div>
+        <h2 class="text-xl font-bold text-gray-900">Consultoría Integral: Fundación Cloud, IAM, Agentes IA y PMO</h2>
+        <p class="text-sm text-gray-500 max-w-lg mx-auto mt-2">
+          Configura cada agente por su tipo de automatización (RAG, Transaccional MCP, Documental, Orquestador o Eventos), define la fundación Cloud/IAM/Red y genera el diseño completo con riesgos, tiempos y presupuesto.
+        </p>
+      </div>
 
-    TARIFARIO LISTA POR CAPA CLOUD (USD):
-    {json.dumps(PRECIOS_LISTA_MULTI_CAPA, indent=2)}
-    """
+      <div id="loaderState" class="hidden card p-16 text-center space-y-4">
+        <div class="animate-spin w-12 h-12 border-4 border-violet-700 border-t-transparent rounded-full mx-auto"></div>
+        <h3 class="text-lg font-bold text-violet-950">Diseñando Fundación Cloud, Agentes IA, Seguridad y Plan PM...</h3>
+        <p class="text-xs text-gray-500 max-w-md mx-auto">Evaluando arquetipos de automatización, tiempos de Organización/Proyectos/IAM, conectividad, riesgos, alcance y costeo multi-nube.</p>
+      </div>
 
-    try:
-        # AGENTE 1: Principal Cloud, Landing Zone (Org/Projects/IAM/Network) & AI Systems Engineer
-        ingenieria_integral = ejecutar_agente(
-            """Eres Principal Cloud & AI Solutions Architect en Comptech.
-            Diseña:
-            1) La Landing Zone completa desde cero: creación de Organización Cloud, estructura de Carpetas y Proyectos (Dev, QA, Prod), 
-               Usuarios, Grupos, Service Accounts para agentes IA, Permisos RBAC/Zero-Trust, Políticas de Seguridad (Org Policies, KMS, DLP, VPC Service Controls) 
-               y el método exacto de conectividad seleccionado (VPN IPsec HA, integración con Google Workspace, Office 365 / Entra ID, o Enlace Dedicado Cloud Interconnect/Direct Connect).
-            2) El diseño detallado de cada Agente de IA: propósito de negocio, flujo de automatización del proceso end-to-end, modelos/MCP y consumo mensual exacto.
-            3) Dimensionamiento de costos de todas las capas acopladas.""",
-            f"Diseña la arquitectura desde fundación hasta agentes IA y consumo:\n{contexto}"
-        )
+      <div id="reportContainer" class="hidden space-y-6">
 
-        # AGENTE 2: Senior Project Manager (PMP/BOOST) & Director de Consultoría Comptech
-        sys_pm_consolidacion = """Eres Senior Project Manager (PMP / Agile BOOST) y Director de Consultoría en Comptech.
-        Consolida todo el informe ejecutivo y técnico en JSON.
-        REGLAS ESTRICTAS:
-        1. En 'diseno_agentes_y_automatizacion', detalla para cada agente su propósito, flujo de automatización paso a paso, consumo mensual estimado y nivel de riesgo. (Si el escenario no incluye IA, incluye al menos 1 propuesta sugerida como fase futura).
-        2. En 'fundacion_cloud_iam_y_conectividad', detalla paso a paso en días: (1) Creación de Organización y jerarquía, (2) Proyectos separados por ambiente, (3) Usuarios y Service Accounts, (4) Políticas IAM y Seguridad, y (5) Conectividad específica (VPN / Workspace / Office 365 / Enlace Dedicado).
-        3. En 'alcance_terminos_y_sugerencias', define con rigor de Project Manager: qué incluye el alcance, qué excluye explícitamente, prerrequisitos del cliente, términos de despliegue/paso a producción y sugerencias estratégicas proactivas.
-        4. En 'matriz_riesgos_pm', identifica riesgos técnicos, de red, seguridad/IAM y adopción con su mitigación concreta.
-        5. En 'diagrama_arquitectura_mermaid' usa 'flowchart TB' limpio (sin paréntesis () ni caracteres raros dentro de etiquetas).
-        6. En 'diagrama_flujo_trabajo_mermaid' usa 'sequenceDiagram' mostrando identidad, conectividad, automatización y auditoría.
-        7. Respeta exactamente los precios de 'servicios_comptech'."""
+        <!-- Resumen Ejecutivo + Supuestos -->
+        <div class="card p-6 border-l-4 border-l-violet-700">
+          <div class="flex flex-wrap justify-between items-start gap-4 mb-3">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-violet-700" id="lblCliente">CLIENTE</span>
+              <h1 class="text-2xl font-bold text-gray-900 mt-0.5" id="lblTituloProyecto">Arquitectura Integral</h1>
+            </div>
+            <div class="flex gap-2.5 text-right">
+              <div class="bg-gray-50 border rounded-xl px-3 py-2">
+                <div class="text-[10px] text-gray-500">Consultoría + Impl.</div>
+                <div class="font-bold text-sm text-gray-900" id="kpiImpl">$0</div>
+              </div>
+              <div class="bg-violet-50 border border-violet-200 rounded-xl px-3 py-2">
+                <div class="text-[10px] text-violet-700">Consumo + Cloud/Mes</div>
+                <div class="font-bold text-sm text-violet-900" id="kpiMes">$0/mes</div>
+              </div>
+              <div class="bg-indigo-950 text-white rounded-xl px-3 py-2">
+                <div class="text-[10px] text-indigo-200">TCO Año 1</div>
+                <div class="font-bold text-sm" id="kpiTco">$0</div>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-700 leading-relaxed mb-3" id="lblResumen"></p>
 
-        resultado = ejecutar_agente(
-            sys_pm_consolidacion,
-            f"Genera el informe integral de Ingeniería y Project Management en JSON:\n\nCONTEXTO:\n{contexto}\n\nDISEÑO DE INGENIERÍA:\n{ingenieria_integral}",
-            schema=InformeConsultoriaIntegral
-        )
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs">
+            <div class="font-bold text-amber-900 mb-1">📋 Supuestos Técnicos y Datos Pendientes de Confirmar:</div>
+            <ul id="listaSupuestos" class="list-disc list-inside text-amber-800 space-y-0.5"></ul>
+          </div>
+        </div>
 
-        return json.loads(resultado)
+        <!-- 1. Propósito de los Agentes IA, Automatización y Consumo -->
+        <div class="card p-6">
+          <div class="mb-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Diseño Agéntico & Automatización</span>
+            <h2 class="text-lg font-bold">1. Propósito de los Agentes IA, Automatización de Procesos y Consumo</h2>
+          </div>
+          <div id="agentesDetalleGrid" class="space-y-3"></div>
+        </div>
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en motor de consultoría Comptech: {str(e)}")
+        <!-- 2. Fundación Cloud: Organización, Proyectos, Usuarios, Permisos IAM, Seguridad y Conectividad -->
+        <div class="card p-6">
+          <div class="mb-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Landing Zone & Conectividad</span>
+            <h2 class="text-lg font-bold">2. Creación de Organización, Proyectos, Usuarios, IAM, Seguridad y Conexión</h2>
+            <p class="text-xs text-gray-500">Secuencia técnica de aprovisionamiento base, políticas de seguridad y enlace híbrido/suite.</p>
+          </div>
+          <div class="overflow-x-auto border border-gray-200 rounded-xl">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-gray-50 border-b text-gray-600">
+                <tr>
+                  <th class="p-3">Dominio de Fundación</th>
+                  <th class="p-3">Configuración Técnica (Org / Proyectos / Usuarios / Red)</th>
+                  <th class="p-3">Políticas de Seguridad y Permisos IAM</th>
+                  <th class="p-3 text-right">Tiempo</th>
+                </tr>
+              </thead>
+              <tbody id="tablaFundacionBody" class="divide-y"></tbody>
+            </table>
+          </div>
+        </div>
 
-@app.get("/", response_class=HTMLResponse)
-async def serve_frontend():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return f.read()
+        <!-- 3. Diagrama Interactivo de Arquitectura -->
+        <div class="card p-6">
+          <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Topología Acoplada</span>
+              <h2 class="text-lg font-bold">3. Diagrama Interactivo de Arquitectura</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs no-print">
+              <button onclick="zoomDiagram('archRender', 0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 +</button>
+              <button onclick="zoomDiagram('archRender', -0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 -</button>
+              <button onclick="resetZoom('archRender')" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50">100%</button>
+              <button onclick="descargarSVG('archRender', 'arquitectura-comptech.svg')" class="px-2.5 py-1 bg-violet-100 text-violet-800 rounded-lg font-semibold">SVG</button>
+            </div>
+          </div>
+
+          <div class="diagram-viewport border border-gray-200 rounded-xl p-4 min-h-[340px] flex items-center justify-center">
+            <div id="archRender" class="transition-transform origin-center"></div>
+          </div>
+
+          <div class="mt-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <span class="text-xs font-bold text-gray-800">Explorar Componentes por Capa:</span>
+              <div class="flex flex-wrap gap-1.5 text-[11px]" id="filtrosCapa"></div>
+            </div>
+            <div id="componentesCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+          </div>
+        </div>
+
+        <!-- 4. Flujo de Trabajo y Automatización -->
+        <div class="card p-6">
+          <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Ejecución, Identidad y Auditoría</span>
+              <h2 class="text-lg font-bold">4. Flujo de Trabajo Operativo y Automatización</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs no-print">
+              <button onclick="zoomDiagram('flowRender', 0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 +</button>
+              <button onclick="zoomDiagram('flowRender', -0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 -</button>
+              <button onclick="resetZoom('flowRender')" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50">100%</button>
+              <button onclick="descargarSVG('flowRender', 'flujo-operativo-comptech.svg')" class="px-2.5 py-1 bg-violet-100 text-violet-800 rounded-lg font-semibold">SVG</button>
+            </div>
+          </div>
+
+          <div class="diagram-viewport border border-gray-200 rounded-xl p-4 min-h-[300px] flex items-center justify-center">
+            <div id="flowRender" class="transition-transform origin-center"></div>
+          </div>
+        </div>
+
+        <!-- 5. Marcos Técnicos y Políticas -->
+        <div class="card p-6">
+          <div class="mb-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Gobierno & Normativa</span>
+            <h2 class="text-lg font-bold">5. Marcos Técnicos, Políticas de Gobierno IA y Políticas IAM</h2>
+          </div>
+          <div id="politicasGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
+        <!-- 6. Costeo Integral y Comparativa Cloud -->
+        <div class="card p-6 space-y-5">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">FinOps & Licenciamiento Multi-Capa</span>
+            <h2 class="text-lg font-bold">6. Costeo Integral, Consumo y Comparativa Multi-Nube</h2>
+          </div>
+
+          <div id="comparativaCloudGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+
+          <div class="overflow-x-auto border border-gray-200 rounded-xl">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-gray-50 border-b text-gray-600">
+                <tr>
+                  <th class="p-3">Capa Arquitectura</th>
+                  <th class="p-3">Componente / Servicio</th>
+                  <th class="p-3">Métrica / Licenciamiento</th>
+                  <th class="p-3">Origen Tarifa</th>
+                  <th class="p-3 text-right">Implementación</th>
+                  <th class="p-3 text-right">Mensual</th>
+                </tr>
+              </thead>
+              <tbody id="tablaCostosBody" class="divide-y"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 7. Project Management: Alcance, Términos, Sugerencias, Riesgos y Tiempos BOOST -->
+        <div class="card p-6 space-y-5">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Project Management Office · Comptech</span>
+            <h2 class="text-lg font-bold">7. Alcance, Términos de Despliegue, Sugerencias, Riesgos y Tiempos BOOST</h2>
+          </div>
+
+          <div class="bg-violet-50 border border-violet-200 rounded-xl p-4 text-xs">
+            <div class="font-bold text-violet-950 mb-1.5">💡 Sugerencias Estratégicas y de Optimización (Arquitecto & PM):</div>
+            <ul id="listaSugerencias" class="list-disc list-inside text-violet-900 space-y-1"></ul>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div class="border border-emerald-200 bg-emerald-50/40 rounded-xl p-3.5">
+              <div class="font-bold text-emerald-900 mb-1.5">✅ Qué Incluye el Alcance</div>
+              <ul id="listaIncluye" class="list-disc list-inside text-gray-700 space-y-1"></ul>
+            </div>
+            <div class="border border-red-200 bg-red-50/40 rounded-xl p-3.5">
+              <div class="font-bold text-red-900 mb-1.5">⛔ Exclusiones Explícitas</div>
+              <ul id="listaExcluye" class="list-disc list-inside text-gray-700 space-y-1"></ul>
+            </div>
+            <div class="border border-gray-200 bg-gray-50 rounded-xl p-3.5">
+              <div class="font-bold text-gray-900 mb-1.5">📌 Prerrequisitos del Cliente</div>
+              <ul id="listaPrereq" class="list-disc list-inside text-gray-700 space-y-1"></ul>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-xs">
+            <span class="font-bold text-gray-900">📜 Términos de Despliegue, Paso a Producción y Aceptación: </span>
+            <span id="txtTerminosDespliegue" class="text-gray-700"></span>
+          </div>
+
+          <div>
+            <h3 class="font-bold text-xs uppercase text-gray-700 mb-2">⚠️ Matriz de Riesgos del Proyecto y Plan de Mitigación</h3>
+            <div class="overflow-x-auto border border-gray-200 rounded-xl">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-gray-50 border-b text-gray-600">
+                  <tr>
+                    <th class="p-2.5">ID / Categoría</th>
+                    <th class="p-2.5">Riesgo Identificado</th>
+                    <th class="p-2.5">Nivel</th>
+                    <th class="p-2.5">Plan de Mitigación Comptech</th>
+                  </tr>
+                </thead>
+                <tbody id="tablaRiesgosBody" class="divide-y"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="font-bold text-xs uppercase text-gray-700 mb-2">⏱️ Tiempos, Hitos y Matriz RACI (Metodología BOOST)</h3>
+            <div class="overflow-x-auto border border-gray-200 rounded-xl">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-violet-50 border-b text-violet-950">
+                  <tr>
+                    <th class="p-3">Fase BOOST</th>
+                    <th class="p-3">Duración</th>
+                    <th class="p-3">Entregables Multi-Capa</th>
+                    <th class="p-3">Hito Formal</th>
+                    <th class="p-3">RACI</th>
+                  </tr>
+                </thead>
+                <tbody id="tablaPmBody" class="divide-y"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="competenciaBox" class="bg-indigo-950 text-white rounded-xl p-5 text-xs space-y-2.5"></div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: { primaryColor: '#ede9fe', primaryTextColor: '#1e1b4b', primaryBorderColor: '#6d28d9', lineColor: '#5b21b6', secondaryColor: '#f8fafc', tertiaryColor: '#f1f5f9' } });
+
+    const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+    const zoomLevels = { archRender: 1, flowRender: 1 };
+    let informeActual = null;
+    let tipoEscenarioActual = "Proyecto Combinado Integral (Fundación + Migración + Agentes IA + IAM)";
+
+    // Lista dinámica de agentes con sus 6 variables técnicas de automatización
+    let agentesDiseno = [
+      {
+        nombre: "Agente Auditoría de Compras SAP",
+        tipo_automatizacion: "Agente Transaccional (Tool-Use / MCP Lectura-Escritura)",
+        disparador: "Evento automático al crearse una Orden de Compra en SAP > $5,000 USD",
+        sistemas_acciones: "Lee orden en SAP ERP, extrae PDF de cotización en Drive/SharePoint y registra dictamen",
+        autonomia: "Human-in-the-loop (Pide aprobación al Gerente si detecta desviación > 5%)",
+        ejecuciones_dia: 1200,
+        kpi_objetivo: "Reducir revisión de órdenes de 3 horas a 2 minutos con 100% trazabilidad"
+      },
+      {
+        nombre: "Asistente Corporativo RRHH y Políticas",
+        tipo_automatizacion: "Copiloto Conversacional + RAG Documental (Solo Lectura)",
+        disparador: "Consulta de empleado vía Chat en Google Workspace / Microsoft Teams",
+        sistemas_acciones: "Consulta Base Vectorial RAG (15,000 manuales/políticas) y genera certificados",
+        autonomia: "Autónomo con guardrails DLP (Escala casos complejos a analista humano)",
+        ejecuciones_dia: 6800,
+        kpi_objetivo: "Resolver el 80% de consultas internas sin intervención de RRHH"
+      }
+    ];
+
+    let serviciosComptech = [
+      { nombre: "Consultoría Marcos Técnicos, Gobierno IA e IAM", categoria: "Consultoría Marco/Políticas", unidad: "Entregable Único", precio_unitario_usd: 4500, cantidad: 1 },
+      { nombre: "Fundación Cloud (Org/Proyectos), Redes y Migración", categoria: "Ingeniería Cloud/Datos", unidad: "Hora", precio_unitario_usd: 135, cantidad: 60 },
+      { nombre: "Plataforma AIVO + Conectores MCP Empresariales", categoria: "Plataforma AIVO/MCP", unidad: "Mes", precio_unitario_usd: 1200, cantidad: 1 },
+      { nombre: "Lead AI Business Transformation + FDE (BOOST)", categoria: "Operación HIL", unidad: "Hora", precio_unitario_usd: 125, cantidad: 80 }
+    ];
+
+    const PRESETS = {
+      combinado: {
+        label: "Proyecto Combinado Integral (Fundación + Migración + Agentes IA + IAM)",
+        checks: { migracion: true, infra: true, agentico: true, seguridad: true, licencias: true, marcos: true }
+      },
+      migracion: {
+        label: "Proyecto de Migración Cloud & Almacenamiento de Datos",
+        checks: { migracion: true, infra: true, agentico: false, seguridad: true, licencias: true, marcos: false }
+      },
+      agentico: {
+        label: "Implementación de Sistema Agéntico IA, Automatización y MCP",
+        checks: { migracion: false, infra: false, agentico: true, seguridad: true, licencias: true, marcos: true }
+      },
+      infraestructura: {
+        label: "Fundación Cloud (Org, Proyectos, Usuarios, IAM, Seguridad y Enlaces)",
+        checks: { migracion: false, infra: true, agentico: false, seguridad: true, licencias: true, marcos: true }
+      }
+    };
+
+    function renderAgentesBuilder() {
+      document.getElementById('agentesBuilderList').innerHTML = agentesDiseno.map((ag, idx) => `
+        <div class="bg-white border border-violet-200 rounded-xl p-3 space-y-2 text-xs shadow-sm">
+          <div class="flex justify-between items-center gap-2 border-b pb-1.5">
+            <input type="text" value="${ag.nombre}" onchange="agentesDiseno[${idx}].nombre=this.value" class="font-bold text-violet-950 w-full focus:outline-none" placeholder="Nombre del Agente">
+            ${agentesDiseno.length > 1 ? `<button type="button" onclick="agentesDiseno.splice(${idx},1);renderAgentesBuilder()" class="text-red-500 font-bold text-xs">✕</button>` : ''}
+          </div>
+
+          <div class="grid grid-cols-1 gap-1.5">
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600">1. Arquetipo / Tipo de Automatización</label>
+              <select onchange="agentesDiseno[${idx}].tipo_automatizacion=this.value" class="w-full border rounded-lg px-2 py-1 text-[11px] bg-gray-50">
+                <option value="Copiloto Conversacional + RAG Documental (Solo Lectura)" ${ag.tipo_automatizacion.includes('RAG') ? 'selected' : ''}>Copiloto Conversacional + RAG (Consulta Docs)</option>
+                <option value="Agente Transaccional (Tool-Use / MCP Lectura-Escritura)" ${ag.tipo_automatizacion.includes('Transaccional') ? 'selected' : ''}>Agente Transaccional (Ejecuta acciones vía API/MCP)</option>
+                <option value="Agente Procesamiento Documental / Extracción OCR y Validación" ${ag.tipo_automatizacion.includes('Documental') ? 'selected' : ''}>Agente Procesamiento Documental / Facturas / Contratos</option>
+                <option value="Orquestador Multi-Agente (Flujo complejo con sub-agentes)" ${ag.tipo_automatizacion.includes('Orquestador') ? 'selected' : ''}>Orquestador Multi-Agente (Workflow multi-paso)</option>
+                <option value="Agente Autónomo Reactivo por Eventos / Webhooks / Monitoreo" ${ag.tipo_automatizacion.includes('Reactivo') ? 'selected' : ''}>Agente Reactivo por Eventos / Alertas en tiempo real</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5">
+              <div>
+                <label class="block text-[10px] font-semibold text-gray-600">2. Disparador (Trigger)</label>
+                <input type="text" value="${ag.disparador}" onchange="agentesDiseno[${idx}].disparador=this.value" class="w-full border rounded-lg px-2 py-1 text-[11px]">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-gray-600">3. Ejecuciones / Día</label>
+                <input type="number" value="${ag.ejecuciones_dia}" onchange="agentesDiseno[${idx}].ejecuciones_dia=parseInt(this.value)||0" class="w-full border rounded-lg px-2 py-1 text-[11px]">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600">4. Sistemas que Conecta y Acciones (MCP / APIs)</label>
+              <input type="text" value="${ag.sistemas_acciones}" onchange="agentesDiseno[${idx}].sistemas_acciones=this.value" class="w-full border rounded-lg px-2 py-1 text-[11px]">
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5">
+              <div>
+                <label class="block text-[10px] font-semibold text-gray-600">5. Nivel Autonomía (HITL)</label>
+                <input type="text" value="${ag.autonomia}" onchange="agentesDiseno[${idx}].autonomia=this.value" class="w-full border rounded-lg px-2 py-1 text-[11px]">
+              </div>
+              <div>
+                <label class="block text-[10px] font-semibold text-gray-600">6. Propósito / KPI Objetivo</label>
+                <input type="text" value="${ag.kpi_objetivo}" onchange="agentesDiseno[${idx}].kpi_objetivo=this.value" class="w-full border rounded-lg px-2 py-1 text-[11px]">
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function agregarAgente() {
+      agentesDiseno.push({
+        nombre: `Nuevo Agente #${agentesDiseno.length + 1}`,
+        tipo_automatizacion: "Agente Transaccional (Tool-Use / MCP Lectura-Escritura)",
+        disparador: "Solicitud en portal o correo entrante",
+        sistemas_acciones: "Consulta CRM/ERP vía MCP y actualiza estado",
+        autonomia: "Human-in-the-loop antes de confirmar",
+        ejecuciones_dia: 1000,
+        kpi_objetivo: "Reducir tiempo operativo en 70%"
+      });
+      renderAgentesBuilder();
+    }
+
+    function aplicarEscenario(tipo) {
+      const preset = PRESETS[tipo];
+      tipoEscenarioActual = preset.label;
+
+      ['combinado', 'migracion', 'agentico', 'infraestructura'].forEach(k => {
+        const btn = document.getElementById(`btn-esc-${k}`);
+        btn.className = k === tipo
+          ? 'p-2.5 rounded-xl border text-left preset-active'
+          : 'p-2.5 rounded-xl border text-left preset-idle';
+      });
+
+      Object.entries(preset.checks).forEach(([key, val]) => {
+        const cb = document.getElementById(`chk-${key}`);
+        cb.checked = val;
+        toggleModulo(cb);
+      });
+    }
+
+    function toggleModulo(checkbox) {
+      const targetId = checkbox.getAttribute('data-target');
+      const section = document.getElementById(targetId);
+      const label = checkbox.closest('label');
+      if (checkbox.checked) {
+        section.classList.remove('hidden');
+        label.classList.add('bg-violet-50/60', 'border-violet-200');
+      } else {
+        section.classList.add('hidden');
+        label.classList.remove('bg-violet-50/60', 'border-violet-200');
+      }
+    }
+
+    function obtenerDatosPendientes() {
+      const pendientes = [];
+      document.querySelectorAll('.dato-check').forEach(chk => {
+        const parentSection = chk.closest('[id^="sec-"]');
+        if (parentSection && !parentSection.classList.contains('hidden') && !chk.checked) {
+          pendientes.push(chk.getAttribute('data-label'));
+        }
+      });
+      return pendientes;
+    }
+
+    function compilarLevantamientoModular() {
+      let texto = `TIPO DE PROYECTO: ${tipoEscenarioActual}\n`;
+      texto += `CLIENTE: ${document.getElementById('cli_empresa').value} | USUARIOS: ${document.getElementById('cli_usuarios').value}\n`;
+      texto += `CONEXIÓN E IDENTIDAD PRINCIPAL: ${document.getElementById('metodo_conexion_principal').value}\n`;
+
+      if (document.getElementById('chk-agentico').checked) {
+        texto += `\n[ESPECIFICACIÓN DETALLADA DE AGENTES IA A CONSTRUIR]\n`;
+        agentesDiseno.forEach((a, i) => {
+          texto += `Agente ${i + 1}: ${a.nombre}\n`;
+          texto += `  - Tipo/Arquetipo de Automatización: ${a.tipo_automatizacion}\n`;
+          texto += `  - Disparador (Trigger): ${a.disparador}\n`;
+          texto += `  - Sistemas y Acciones (MCP/APIs): ${a.sistemas_acciones}\n`;
+          texto += `  - Nivel de Autonomía (HITL): ${a.autonomia}\n`;
+          texto += `  - Volumen estimado: ${a.ejecuciones_dia} ejecuciones/día\n`;
+          texto += `  - Propósito y KPI de negocio: ${a.kpi_objetivo}\n`;
+        });
+      }
+      if (document.getElementById('chk-infra').checked) {
+        texto += `\n[FUNDACIÓN CLOUD, ORGANIZACIÓN, PROYECTOS Y RED]\n- Dominio y estructura proyectos: ${document.getElementById('inf_ambientes').value}\n- Cómputo y SLA: ${document.getElementById('inf_computo').value}\n- Detalle técnico red/VPN/dedicado: ${document.getElementById('inf_red').value}\n`;
+      }
+      if (document.getElementById('chk-seguridad').checked) {
+        texto += `\n[USUARIOS, PERMISOS IAM Y POLÍTICAS SEGURIDAD]\n- Usuarios y roles IAM: ${document.getElementById('seg_idp').value}\n- Normativa y clasificación: ${document.getElementById('seg_norma').value}\n- Políticas de seguridad contempladas: ${document.getElementById('seg_controles').value}\n`;
+      }
+      if (document.getElementById('chk-migracion').checked) {
+        texto += `\n[MIGRACIÓN Y ALMACENAMIENTO]\n- Origen (Servidores/DB): ${document.getElementById('mig_origen').value}\n- Volumen y RPO/RTO: ${document.getElementById('mig_volumen').value}\n`;
+      }
+      if (document.getElementById('chk-licencias').checked) {
+        texto += `\n[LICENCIAMIENTO]\n- Detalle: ${document.getElementById('lic_detalle').value}\n`;
+      }
+      if (document.getElementById('chk-marcos').checked) {
+        texto += `\n[MARCOS Y POLÍTICAS]\n- Entregables: ${document.getElementById('mar_lista').value}\n`;
+      }
+
+      const notas = document.getElementById('notas_adicionales').value.trim();
+      if (notas) {
+        texto += `\n[RESTRICCIONES / NOTAS ADICIONALES]\n${notas}\n`;
+      }
+      return texto;
+    }
+
+    function renderServicios() {
+      document.getElementById('serviciosComptechList').innerHTML = serviciosComptech.map((s, i) => `
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 space-y-1">
+          <div class="flex justify-between gap-1">
+            <input type="text" value="${s.nombre}" onchange="serviciosComptech[${i}].nombre=this.value" class="font-semibold text-gray-800 bg-transparent w-full focus:outline-none">
+            <button onclick="serviciosComptech.splice(${i},1);renderServicios()" class="text-red-500 font-bold">✕</button>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] text-gray-600">
+            <span>USD:</span>
+            <input type="number" value="${s.precio_unitario_usd}" onchange="serviciosComptech[${i}].precio_unitario_usd=parseFloat(this.value)||0;renderServicios()" class="w-16 border rounded px-1.5 py-0.5 bg-white">
+            <span>x</span>
+            <input type="number" value="${s.cantidad}" onchange="serviciosComptech[${i}].cantidad=parseFloat(this.value)||0;renderServicios()" class="w-14 border rounded px-1.5 py-0.5 bg-white">
+            <span>(${s.unidad})</span>
+            <span class="ml-auto font-bold text-violet-800">${fmt(s.precio_unitario_usd * s.cantidad)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function agregarServicio() {
+      serviciosComptech.push({ nombre: "Servicio Especializado Comptech", categoria: "Ciberseguridad/IAM", unidad: "Hora", precio_unitario_usd: 130, cantidad: 24 });
+      renderServicios();
+    }
+
+    function zoomDiagram(id, delta) {
+      zoomLevels[id] = Math.min(2, Math.max(0.5, zoomLevels[id] + delta));
+      document.getElementById(id).style.transform = `scale(${zoomLevels[id]})`;
+    }
+
+    function resetZoom(id) {
+      zoomLevels[id] = 1;
+      document.getElementById(id).style.transform = `scale(1)`;
+    }
+
+    function descargarSVG(containerId, filename) {
+      const svg = document.getElementById(containerId).querySelector('svg');
+      if (!svg) return;
+      const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+    }
+
+    async function renderMermaidSafe(elementId, code, uid) {
+      const el = document.getElementById(elementId);
+      try {
+        const cleanCode = code.replace(/```mermaid/g, '').replace(/```/g, '').trim();
+        const { svg } = await mermaid.render(uid, cleanCode);
+        el.innerHTML = svg;
+      } catch (err) {
+        el.innerHTML = `<pre class="text-xs text-red-600 p-3 bg-red-50 rounded">${code}</pre>`;
+      }
+    }
+
+    async function generarConsultoriaIntegral() {
+      const modulos = Array.from(document.querySelectorAll('#modulosContainer input:checked')).map(cb => cb.value);
+      if (modulos.length === 0) {
+        alert("Activa al menos un módulo de alcance.");
+        return;
+      }
+
+      const payload = {
+        tipo_escenario: tipoEscenarioActual,
+        informacion_cliente_libre: compilarLevantamientoModular(),
+        datos_pendientes_levantar: obtenerDatosPendientes(),
+        modulos_acoplados: modulos,
+        nube_preferida: document.getElementById('nube_preferida').value,
+        metodo_conexion_principal: document.getElementById('metodo_conexion_principal').value,
+        escenario_competitivo: document.getElementById('escenario_competitivo').value,
+        modalidad_comptech: document.getElementById('modalidad_comptech').value,
+        horizonte_boost: document.getElementById('horizonte_boost').value,
+        servicios_comptech: serviciosComptech
+      };
+
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('reportContainer').classList.add('hidden');
+      document.getElementById('loaderState').classList.remove('hidden');
+      document.getElementById('btnGenerar').disabled = true;
+
+      try {
+        const res = await fetch('/api/generar-consultoria-integral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(await res.text());
+        informeActual = await res.json();
+        await renderInforme(informeActual);
+      } catch (err) {
+        alert("Error generando consultoría integral: " + err.message);
+      } finally {
+        document.getElementById('loaderState').classList.add('hidden');
+        document.getElementById('btnGenerar').disabled = false;
+      }
+    }
+
+    async function renderInforme(d) {
+      document.getElementById('lblCliente').textContent = `CLIENTE: ${d.cliente_detectado} · ${tipoEscenarioActual.toUpperCase()}`;
+      document.getElementById('lblTituloProyecto').textContent = d.titulo_proyecto;
+      document.getElementById('lblResumen').textContent = d.resumen_ejecutivo_consultoria;
+      document.getElementById('kpiImpl').textContent = fmt(d.total_implementacion_usd);
+      document.getElementById('kpiMes').textContent = fmt(d.total_mensual_usd) + '/mes';
+      document.getElementById('kpiTco').textContent = fmt(d.tco_anual_usd);
+
+      const supuestos = d.supuestos_y_datos_por_validar || [];
+      document.getElementById('listaSupuestos').innerHTML = supuestos.length
+        ? supuestos.map(s => `<li>${s}</li>`).join('')
+        : '<li>Todos los parámetros técnicos críticos fueron confirmados en el levantamiento.</li>';
+
+      // 1. Agentes IA y Automatización
+      document.getElementById('agentesDetalleGrid').innerHTML = (d.diseno_agentes_y_automatizacion || []).map(ag => {
+        const rColor = ag.nivel_riesgo_ia.toLowerCase().includes('alto') ? 'bg-red-100 text-red-800' :
+                       ag.nivel_riesgo_ia.toLowerCase().includes('medio') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800';
+        return `
+          <div class="border border-violet-200 rounded-xl p-4 bg-violet-50/30 text-xs space-y-2">
+            <div class="flex flex-wrap justify-between items-center gap-2">
+              <div class="font-bold text-sm text-violet-950">🤖 ${ag.nombre_agente}</div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-full font-semibold text-[10px] ${rColor}">Riesgo ${ag.nivel_riesgo_ia}</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-white border font-bold text-violet-800">${ag.consumo_estimado_mes}</span>
+              </div>
+            </div>
+            <div><span class="font-bold text-gray-800">🎯 Propósito: </span><span class="text-gray-700">${ag.proposito_negocio}</span></div>
+            <div><span class="font-bold text-gray-800">⚡ Automatización del Proceso: </span><span class="text-gray-700">${ag.flujo_automatizacion_proceso}</span></div>
+            <div class="text-[11px] text-indigo-900 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5">
+              <span class="font-semibold">Stack & Conectores:</span> ${ag.modelo_ia_y_herramientas}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 2. Fundación Cloud
+      document.getElementById('tablaFundacionBody').innerHTML = (d.fundacion_cloud_iam_y_conectividad || []).map(f => `
+        <tr>
+          <td class="p-3 font-bold text-violet-950">${f.dominio_fundacion}</td>
+          <td class="p-3 text-gray-700">${f.configuracion_tecnica}</td>
+          <td class="p-3 text-gray-600">${f.politicas_seguridad_aplicadas}</td>
+          <td class="p-3 text-right font-bold text-indigo-900">${f.tiempo_implementacion_dias} días</td>
+        </tr>
+      `).join('');
+
+      // 3 y 4. Diagramas Mermaid
+      await renderMermaidSafe('archRender', d.diagrama_arquitectura_mermaid, 'svgArch_' + Date.now());
+      await renderMermaidSafe('flowRender', d.diagrama_flujo_trabajo_mermaid, 'svgFlow_' + Date.now());
+
+      const capas = ['Todas', ...new Set(d.arquitectura_multi_capa.map(c => c.capa_arquitectura))];
+      document.getElementById('filtrosCapa').innerHTML = capas.map(c => `
+        <button onclick="filtrarCapa('${c}')" class="px-2.5 py-1 rounded-full border border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-700 hover:text-white font-semibold">
+          ${c}
+        </button>
+      `).join('');
+      filtrarCapa('Todas');
+
+      // 5. Marcos y Políticas
+      document.getElementById('politicasGrid').innerHTML = d.marcos_y_politicas_entregables.map(p => `
+        <div class="border border-violet-200 bg-violet-50/40 rounded-xl p-4 text-xs">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-violet-700">${p.dominio}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-white border font-semibold text-gray-700">${p.modalidad_entrega}</span>
+          </div>
+          <div class="font-bold text-sm text-gray-900 mb-1">📑 ${p.nombre_entregable}</div>
+          <p class="text-gray-600 leading-relaxed">${p.alcance_y_controles}</p>
+        </div>
+      `).join('');
+
+      // 6. Comparativa y Costos
+      document.getElementById('comparativaCloudGrid').innerHTML = d.comparativa_proveedores_cloud.map(c => `
+        <div class="border ${c.es_recomendado ? 'border-2 border-violet-700 bg-violet-50/30' : 'border-gray-200'} rounded-xl p-4 text-xs">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-sm">☁️ ${c.proveedor}</span>
+            ${c.es_recomendado ? '<span class="px-2 py-0.5 rounded-full bg-violet-700 text-white text-[10px] font-bold">Recomendado</span>' : ''}
+          </div>
+          <p class="text-gray-600 mb-3">${c.justificacion_integral}</p>
+          <div class="space-y-1 border-t pt-2">
+            <div class="flex justify-between"><span>Consultoría + Impl.:</span><span class="font-bold">${fmt(c.inversion_implementacion_usd)}</span></div>
+            <div class="flex justify-between"><span>Consumo + Cloud/Mes:</span><span class="font-bold text-violet-700">${fmt(c.costo_recurrente_mensual_usd)}/mes</span></div>
+            <div class="flex justify-between"><span>TCO Año 1:</span><span class="font-bold">${fmt(c.tco_anual_usd)}</span></div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('tablaCostosBody').innerHTML = d.arquitectura_multi_capa.map(item => `
+        <tr>
+          <td class="p-2.5 font-semibold text-gray-800">${item.capa_arquitectura}</td>
+          <td class="p-2.5 font-bold text-violet-900">${item.nombre_componente} <span class="text-gray-400 font-normal">(${item.proveedor_o_origen})</span></td>
+          <td class="p-2.5 text-gray-600">${item.detalle_licenciamiento_o_metrica}</td>
+          <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-gray-100 text-[10px] font-semibold">${item.origen_tarifa}</span></td>
+          <td class="p-2.5 text-right font-semibold">${fmt(item.costo_implementacion_usd)}</td>
+          <td class="p-2.5 text-right font-bold">${fmt(item.costo_mensual_usd)}/mes</td>
+        </tr>
+      `).join('');
+
+      // 7. PM: Alcance, Términos, Sugerencias, Riesgos y Cronograma
+      const alc = d.alcance_terminos_y_sugerencias;
+      document.getElementById('listaSugerencias').innerHTML = (alc.sugerencias_estrategicas_consultor || []).map(s => `<li>${s}</li>`).join('');
+      document.getElementById('listaIncluye').innerHTML = (alc.incluye_en_alcance || []).map(i => `<li>${i}</li>`).join('');
+      document.getElementById('listaExcluye').innerHTML = (alc.excluye_del_alcance || []).map(e => `<li>${e}</li>`).join('');
+      document.getElementById('listaPrereq').innerHTML = (alc.prerequisitos_cliente || []).map(p => `<li>${p}</li>`).join('');
+      document.getElementById('txtTerminosDespliegue').textContent = alc.terminos_despliegue_y_entrega;
+
+      document.getElementById('tablaRiesgosBody').innerHTML = (d.matriz_riesgos_pm || []).map(r => `
+        <tr>
+          <td class="p-2.5 font-bold text-gray-800">${r.id_riesgo} · ${r.categoria}</td>
+          <td class="p-2.5 text-gray-700">${r.descripcion_riesgo}</td>
+          <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-semibold text-[10px]">${r.probabilidad_impacto}</span></td>
+          <td class="p-2.5 text-gray-600">${r.plan_mitigacion_comptech}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('tablaPmBody').innerHTML = d.cronograma_pm_boost.map(f => `
+        <tr>
+          <td class="p-2.5 font-bold text-gray-900">${f.fase_boost}</td>
+          <td class="p-2.5 text-gray-600">${f.duracion}</td>
+          <td class="p-2.5 text-gray-700">${f.entregables_multi_capa.join(' · ')}</td>
+          <td class="p-2.5 font-semibold text-violet-800">${f.hito_formal}</td>
+          <td class="p-2.5 text-gray-600">${f.responsables_raci}</td>
+        </tr>
+      `).join('');
+
+      const comp = d.inteligencia_competitiva;
+      document.getElementById('competenciaBox').innerHTML = `
+        <div class="flex flex-wrap justify-between items-center gap-2 border-b border-indigo-800 pb-2">
+          <span class="font-bold uppercase tracking-wider text-violet-300">🎯 Estrategia Competitiva Comptech · ${comp.arquetipo_competidor}</span>
+          <span class="text-[11px] bg-indigo-900 px-2.5 py-0.5 rounded-full text-indigo-200">Comptech ISO 9001 & 27001</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div class="font-semibold text-emerald-300 mb-0.5">✓ En qué gana Comptech:</div>
+            <p class="text-indigo-100 leading-relaxed">${comp.en_que_gana_comptech}</p>
+          </div>
+          <div>
+            <div class="font-semibold text-amber-300 mb-0.5">⚠️ Riesgo a vigilar en la cuenta:</div>
+            <p class="text-indigo-100 leading-relaxed">${comp.riesgo_a_vigilar}</p>
+          </div>
+        </div>
+        <div class="bg-indigo-900/70 rounded-lg p-3 space-y-1.5">
+          <div><span class="font-bold text-violet-300">💬 Frase de Posicionamiento:</span> "${comp.frase_posicionamiento}"</div>
+          <div><span class="font-bold text-amber-300">❓ Pregunta Trampa Clave para el Cliente:</span> "${comp.pregunta_trampa_clave}"</div>
+        </div>
+      `;
+
+      document.getElementById('reportContainer').classList.remove('hidden');
+      document.getElementById('btnPdf').classList.remove('hidden');
+      document.getElementById('btnMd').classList.remove('hidden');
+    }
+
+    function filtrarCapa(capa) {
+      const lista = capa === 'Todas'
+        ? informeActual.arquitectura_multi_capa
+        : informeActual.arquitectura_multi_capa.filter(c => c.capa_arquitectura === capa);
+
+      document.getElementById('componentesCardsGrid').innerHTML = lista.map(c => `
+        <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 text-xs hover:border-violet-400 transition">
+          <div class="flex justify-between items-start gap-2 mb-1">
+            <span class="font-bold text-violet-950">${c.nombre_componente}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-white border text-gray-700">${c.capa_arquitectura}</span>
+          </div>
+          <p class="text-gray-600 text-[11px] mb-1.5">${c.referencia_funcional}</p>
+          <div class="text-[10px] text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded mb-2">📜 ${c.detalle_licenciamiento_o_metrica}</div>
+          <div class="flex justify-between text-[11px] font-semibold text-gray-800 border-t pt-1.5">
+            <span>${c.proveedor_o_origen} · ${c.origen_tarifa}</span>
+            <span class="text-violet-700">${fmt(c.costo_implementacion_usd)} impl. | ${fmt(c.costo_mensual_usd)}/mes</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function exportarMarkdown() {
+      if (!informeActual) return;
+      const d = informeActual;
+      const md = `# ${d.titulo_proyecto}\n**Cliente:** ${d.cliente_detectado} | **Consultoría:** Comptech\n\n## Resumen Ejecutivo\n${d.resumen_ejecutivo_consultoria}\n\n## 1. Agentes IA y Automatización\n` +
+        (d.diseno_agentes_y_automatizacion || []).map(a => `- **${a.nombre_agente}**: ${a.proposito_negocio} | Automatización: ${a.flujo_automatizacion_proceso} | Consumo: ${a.consumo_estimado_mes}`).join('\n') +
+        `\n\n## 2. Fundación Cloud, IAM y Conectividad\n` +
+        (d.fundacion_cloud_iam_y_conectividad || []).map(f => `- **${f.dominio_fundacion}** (${f.tiempo_implementacion_dias} días): ${f.configuracion_tecnica} | Seguridad: ${f.politicas_seguridad_aplicadas}`).join('\n') +
+        `\n\n## Diagrama de Arquitectura\n\`\`\`mermaid\n${d.diagrama_arquitectura_mermaid}\n\`\`\`\n\n## Flujo de Trabajo\n\`\`\`mermaid\n${d.diagrama_flujo_trabajo_mermaid}\n\`\`\``;
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Informe-Completo-Comptech-${d.cliente_detectado.replace(/\s+/g, '-')}.md`;
+      a.click();
+    }
+
+    renderAgentesBuilder();
+    renderServicios();
+  </script>
+</body>
+</html>
