@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
 
-app = FastAPI(title="Comptech · Consultoría Integral Cloud, On-Premise, Ciberseguridad, Datos & IA")
+app = FastAPI(title="Comptech · Enterprise Architecture, Cybersecurity, AI & PM Studio")
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,7 +27,8 @@ PRECIOS_LISTA_MULTI_CAPA = {
     "GCP": {
         "Almacenamiento_DataWarehouse_TB_mes": 25.0,
         "Procesamiento_Compute_mes": 110.0,
-        "Conectividad_Hibrida_VPN_mes": 115.0,
+        "Conectividad_VPN_HA_mes": 115.0,
+        "Enlace_Dedicado_Interconnect_mes": 450.0,
         "IAM_ZeroTrust_Identidades_mes": 65.0,
         "Ciberseguridad_DLP_WAF_mes": 120.0,
         "IA_LLM_Input_1M_tokens": 0.15,
@@ -37,7 +38,8 @@ PRECIOS_LISTA_MULTI_CAPA = {
     "AWS": {
         "Almacenamiento_DataWarehouse_TB_mes": 30.0,
         "Procesamiento_Compute_mes": 120.0,
-        "Conectividad_Hibrida_VPN_mes": 130.0,
+        "Conectividad_VPN_HA_mes": 130.0,
+        "Enlace_Dedicado_DirectConnect_mes": 480.0,
         "IAM_ZeroTrust_Identidades_mes": 70.0,
         "Ciberseguridad_DLP_WAF_mes": 135.0,
         "IA_LLM_Input_1M_tokens": 0.25,
@@ -47,7 +49,8 @@ PRECIOS_LISTA_MULTI_CAPA = {
     "Azure": {
         "Almacenamiento_DataWarehouse_TB_mes": 28.0,
         "Procesamiento_Compute_mes": 115.0,
-        "Conectividad_Hibrida_VPN_mes": 120.0,
+        "Conectividad_VPN_HA_mes": 120.0,
+        "Enlace_Dedicado_ExpressRoute_mes": 460.0,
         "IAM_ZeroTrust_Identidades_mes": 68.0,
         "Ciberseguridad_DLP_WAF_mes": 130.0,
         "IA_LLM_Input_1M_tokens": 0.20,
@@ -73,10 +76,26 @@ class ProyectoConsultoriaRequest(BaseModel):
     datos_pendientes_levantar: List[str] = []
     modulos_acoplados: List[str]
     nube_preferida: str = "GCP"
+    metodo_conexion_principal: str = "VPN IPsec HA + Google Workspace / Office 365"
     escenario_competitivo: str = "08 Equipo interno, CoE o no hacer nada"
     modalidad_comptech: str = "Híbrido Comptech + VTO Cliente (Transferencia de conocimiento)"
     horizonte_boost: str = "Versión Acelerada BOOST (~4 meses: M1-M4)"
     servicios_comptech: List[ServicioConsultoriaComptech]
+
+class DisenoAgenteIA(BaseModel):
+    nombre_agente: str
+    proposito_negocio: str = Field(description="Objetivo exacto de negocio y problema que resuelve")
+    modelo_ia_y_herramientas: str = Field(description="Ej: Gemini 2.5 Flash + Vertex AI + Servidores MCP")
+    flujo_automatizacion_proceso: str = Field(description="Paso a paso de qué automatiza, disparadores, acciones y validación Human-in-the-loop")
+    consumo_estimado_mes: str = Field(description="Tokens estimados, llamadas API/MCP y costo mensual proyectado")
+    nivel_riesgo_ia: str = Field(description="Bajo | Medio | Alto")
+
+class PasoFundacionCloudIAM(BaseModel):
+    orden: int
+    dominio_fundacion: str = Field(description="1. Organización y Carpetas | 2. Proyectos (Dev/QA/Prod) | 3. Usuarios y Service Accounts | 4. Permisos RBAC y Políticas de Seguridad | 5. Conectividad (VPN / Workspace / Office 365 / Interconnect)")
+    configuracion_tecnica: str
+    politicas_seguridad_aplicadas: str
+    tiempo_implementacion_dias: int
 
 class ComponenteMultiCapa(BaseModel):
     capa_arquitectura: str
@@ -93,6 +112,20 @@ class PoliticaYMarcoTecnico(BaseModel):
     nombre_entregable: str
     alcance_y_controles: str
     modalidad_entrega: str
+
+class RiesgoProyectoPM(BaseModel):
+    id_riesgo: str
+    categoria: str = Field(description="Técnico / Conectividad | Seguridad / IAM | Datos / Migración | Adopción / Negocio")
+    descripcion_riesgo: str
+    probabilidad_impacto: str = Field(description="Ej: Probabilidad Media · Impacto Alto")
+    plan_mitigacion_comptech: str
+
+class AlcanceYTerminosPM(BaseModel):
+    incluye_en_alcance: List[str]
+    excluye_del_alcance: List[str]
+    prerequisitos_cliente: List[str]
+    terminos_despliegue_y_entrega: str
+    sugerencias_estrategicas_consultor: List[str] = Field(description="Recomendaciones proactivas de arquitectura, optimización de costos y escalabilidad")
 
 class ComparativaProveedor(BaseModel):
     proveedor: str
@@ -120,11 +153,15 @@ class InformeConsultoriaIntegral(BaseModel):
     titulo_proyecto: str
     cliente_detectado: str
     resumen_ejecutivo_consultoria: str
-    supuestos_y_datos_por_validar: List[str] = Field(description="Lista de datos técnicos que quedaron sin confirmar en el levantamiento y supuestos aplicados para cotizar")
+    supuestos_y_datos_por_validar: List[str]
     diagrama_arquitectura_mermaid: str
     diagrama_flujo_trabajo_mermaid: str
+    diseno_agentes_y_automatizacion: List[DisenoAgenteIA]
+    fundacion_cloud_iam_y_conectividad: List[PasoFundacionCloudIAM]
     arquitectura_multi_capa: List[ComponenteMultiCapa]
     marcos_y_politicas_entregables: List[PoliticaYMarcoTecnico]
+    alcance_terminos_y_sugerencias: AlcanceYTerminosPM
+    matriz_riesgos_pm: List[RiesgoProyectoPM]
     comparativa_proveedores_cloud: List[ComparativaProveedor]
     inteligencia_competitiva: EstrategiaCompetitivaComptech
     cronograma_pm_boost: List[FaseProjectManagement]
@@ -166,50 +203,58 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
         for s in req.servicios_comptech
     ])
 
-    pendientes_txt = ", ".join(req.datos_pendientes_levantar) if req.datos_pendientes_levantar else "Ninguno; todos los datos críticos fueron confirmados."
+    pendientes_txt = ", ".join(req.datos_pendientes_levantar) if req.datos_pendientes_levantar else "Ninguno; datos críticos confirmados."
 
     contexto = f"""
     FIRMA DE CONSULTORÍA: Comptech (Certificada ISO 9001 e ISO 27001; Marcos de referencia TOGAF e ISO 42001; Metodología BOOST)
-    ESCENARIO DE PROYECTO SELECCIONADO: {req.tipo_escenario}
-    MÓDULOS ACOPLADOS ACTIVOS: {', '.join(req.modulos_acoplados)}
-    NUBE BASE PREFERIDA: {req.nube_preferida}
+    ESCENARIO DE PROYECTO: {req.tipo_escenario}
+    MÓDULOS ACOPLADOS: {', '.join(req.modulos_acoplados)}
+    NUBE PRINCIPAL: {req.nube_preferida}
+    MÉTODO DE CONEXIÓN E IDENTIDAD SELECCIONADO: {req.metodo_conexion_principal}
     ESCENARIO COMPETITIVO: {req.escenario_competitivo}
     MODALIDAD Y HORIZONTE: {req.modalidad_comptech} | {req.horizonte_boost}
 
-    DATOS LEVANTADOS POR MÓDULO:
+    DATOS TÉCNICOS LEVANTADOS:
     {req.informacion_cliente_libre}
 
-    DATOS TÉCNICOS MARCADOS COMO PENDIENTES DE VALIDAR CON EL CLIENTE:
+    DATOS PENDIENTES POR VALIDAR:
     {pendientes_txt}
 
-    SERVICIOS DE CONSULTORÍA Y PLATAFORMA COMPTECH (RESPETAR PRECIOS EXACTOS):
+    SERVICIOS COMPTECH (RESPETAR PRECIOS EXACTOS):
     {servicios_txt}
 
-    TARIFARIO REFERENCIAL DE LISTA POR CAPA CLOUD (USD):
+    TARIFARIO LISTA POR CAPA CLOUD (USD):
     {json.dumps(PRECIOS_LISTA_MULTI_CAPA, indent=2)}
     """
 
     try:
+        # AGENTE 1: Principal Cloud, Landing Zone (Org/Projects/IAM/Network) & AI Systems Engineer
         ingenieria_integral = ejecutar_agente(
-            """Eres Principal Enterprise Architect especialista en Migraciones Cloud, Infraestructura Híbrida On-Premise, 
-            Almacenamiento de Datos, Ciberseguridad, IAM y Sistemas Agénticos de IA.
-            Acopla ÚNICAMENTE los módulos marcados en 'modulos_acoplados' bajo el escenario seleccionado. 
-            Si hay datos marcados como pendientes de validar, establece supuestos técnicos conservadores para poder cotizar.""",
-            f"Diseña la arquitectura integral, licenciamiento y políticas:\n{contexto}"
+            """Eres Principal Cloud & AI Solutions Architect en Comptech.
+            Diseña:
+            1) La Landing Zone completa desde cero: creación de Organización Cloud, estructura de Carpetas y Proyectos (Dev, QA, Prod), 
+               Usuarios, Grupos, Service Accounts para agentes IA, Permisos RBAC/Zero-Trust, Políticas de Seguridad (Org Policies, KMS, DLP, VPC Service Controls) 
+               y el método exacto de conectividad seleccionado (VPN IPsec HA, integración con Google Workspace, Office 365 / Entra ID, o Enlace Dedicado Cloud Interconnect/Direct Connect).
+            2) El diseño detallado de cada Agente de IA: propósito de negocio, flujo de automatización del proceso end-to-end, modelos/MCP y consumo mensual exacto.
+            3) Dimensionamiento de costos de todas las capas acopladas.""",
+            f"Diseña la arquitectura desde fundación hasta agentes IA y consumo:\n{contexto}"
         )
 
-        sys_consolidacion = """Eres el Director de Consultoría Integral y Project Management en Comptech.
-        Consolida el informe técnico, financiero y de gobierno en JSON.
+        # AGENTE 2: Senior Project Manager (PMP/BOOST) & Director de Consultoría Comptech
+        sys_pm_consolidacion = """Eres Senior Project Manager (PMP / Agile BOOST) y Director de Consultoría en Comptech.
+        Consolida todo el informe ejecutivo y técnico en JSON.
         REGLAS ESTRICTAS:
-        1. Enfoca el diseño y los diagramas estrictamente en el 'tipo_escenario' y 'modulos_acoplados' seleccionados.
-        2. Documenta en 'supuestos_y_datos_por_validar' qué datos faltan por confirmar en la próxima sesión de levantamiento y qué supuesto se usó para costear.
-        3. En 'diagrama_arquitectura_mermaid' usa 'flowchart TB' con subgraphs limpios según los módulos activos. Prohibido usar paréntesis () o caracteres especiales dentro de etiquetas de nodos.
-        4. En 'diagrama_flujo_trabajo_mermaid' usa 'sequenceDiagram' mostrando el flujo operativo acorde a los módulos activos.
-        5. Respeta exactamente los precios ingresados en 'servicios_comptech'."""
+        1. En 'diseno_agentes_y_automatizacion', detalla para cada agente su propósito, flujo de automatización paso a paso, consumo mensual estimado y nivel de riesgo. (Si el escenario no incluye IA, incluye al menos 1 propuesta sugerida como fase futura).
+        2. En 'fundacion_cloud_iam_y_conectividad', detalla paso a paso en días: (1) Creación de Organización y jerarquía, (2) Proyectos separados por ambiente, (3) Usuarios y Service Accounts, (4) Políticas IAM y Seguridad, y (5) Conectividad específica (VPN / Workspace / Office 365 / Enlace Dedicado).
+        3. En 'alcance_terminos_y_sugerencias', define con rigor de Project Manager: qué incluye el alcance, qué excluye explícitamente, prerrequisitos del cliente, términos de despliegue/paso a producción y sugerencias estratégicas proactivas.
+        4. En 'matriz_riesgos_pm', identifica riesgos técnicos, de red, seguridad/IAM y adopción con su mitigación concreta.
+        5. En 'diagrama_arquitectura_mermaid' usa 'flowchart TB' limpio (sin paréntesis () ni caracteres raros dentro de etiquetas).
+        6. En 'diagrama_flujo_trabajo_mermaid' usa 'sequenceDiagram' mostrando identidad, conectividad, automatización y auditoría.
+        7. Respeta exactamente los precios de 'servicios_comptech'."""
 
         resultado = ejecutar_agente(
-            sys_consolidacion,
-            f"Genera el informe integral de consultoría y arquitectura en JSON:\n\nCONTEXTO:\n{contexto}\n\nINGENIERÍA MULTI-CAPA:\n{ingenieria_integral}",
+            sys_pm_consolidacion,
+            f"Genera el informe integral de Ingeniería y Project Management en JSON:\n\nCONTEXTO:\n{contexto}\n\nDISEÑO DE INGENIERÍA:\n{ingenieria_integral}",
             schema=InformeConsultoriaIntegral
         )
 
