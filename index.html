@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comptech · Consultoría Integral Cloud, On-Premise, Ciberseguridad, Datos & IA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f5f4fa; color: #1e1b4b; }
+    .card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .btn-primary { background: #5b21b6; color: white; transition: all 0.2s; }
+    .btn-primary:hover { background: #4c1d95; }
+    .diagram-viewport { overflow: auto; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 18px 18px; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff; }
+      .card { box-shadow: none; border: 1px solid #d1d5db; break-inside: avoid; margin-bottom: 16px; }
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-14">
+
+  <!-- Navbar -->
+  <header class="bg-white border-b border-gray-200 px-6 py-3.5 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-700 to-indigo-950 text-white flex items-center justify-center font-bold text-lg shadow">C</div>
+        <div>
+          <div class="font-bold text-base leading-tight flex items-center gap-2">
+            <span>Comptech</span>
+            <span class="text-gray-300">|</span>
+            <span class="text-violet-700">Enterprise Architecture, Cybersecurity & AI Studio</span>
+          </div>
+          <div class="text-xs text-gray-500">Consultoría como Servicio · Datos · Procesamiento · IAM · Ciberseguridad · Licenciamiento · BOOST</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 no-print">
+        <button onclick="exportarMarkdown()" id="btnMd" class="hidden px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-semibold hover:bg-gray-50">⬇️ Informe (.MD)</button>
+        <button onclick="window.print()" id="btnPdf" class="hidden btn-primary px-4 py-2 rounded-xl text-xs font-semibold shadow-sm">🖨️ Imprimir / Guardar PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- ==========================================
+         PANEL IZQUIERDO: ACOPLAMIENTO MODULAR E INSUMOS
+    =========================================== -->
+    <aside class="lg:col-span-4 space-y-5 no-print">
+      
+      <!-- 1. Selección de Módulos de Arquitectura -->
+      <div class="card p-5">
+        <span class="text-xs font-bold uppercase tracking-wider text-violet-700">1. Módulos a Acoplar en la Arquitectura</span>
+        <p class="text-[11px] text-gray-500 mt-0.5 mb-3">Activa las capas técnicas y de gobierno que requiere el proyecto:</p>
+        
+        <div class="grid grid-cols-1 gap-1.5 text-xs" id="modulosContainer">
+          <label class="flex items-center gap-2 p-2 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+            <input type="checkbox" value="Almacenamiento y Datos (Data Lakehouse / Migración DB)" checked class="accent-violet-700">
+            <span class="font-medium">🗄️ Almacenamiento y Datos (DW / Lakehouse)</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+            <input type="checkbox" value="Procesamiento e Infraestructura (Cómputo Cloud / Serverless / Contenedores)" checked class="accent-violet-700">
+            <span class="font-medium">⚙️ Procesamiento e Infraestructura Cloud</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+            <input type="checkbox" value="Conectividad Híbrida On-Premise (VPN / Interconnect / Gateways)" checked class="accent-violet-700">
+            <span class="font-medium">🔌 Conectividad On-Premise & Redes Híbridas</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+            <input type="checkbox" value="Arquitectura IAM (Identidades Humanos y Agentes, RBAC/Zero-Trust)" checked class="accent-violet-700">
+            <span class="font-medium">🔑 IAM y Gobierno de Identidades (Humanos/Agentes)</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+            <input type="checkbox" value="Ciberseguridad Perimetral, Cifrado y DLP (Prevención Fuga Datos)" checked class="accent-violet-700">
+            <span class="font-medium">🛡️ Ciberseguridad, Cifrado y DLP</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+            <input type="checkbox" value="Licenciamiento Multi-Capa (Cloud, Bases de Datos, Modelos y Herramientas)" checked class="accent-violet-700">
+            <span class="font-medium">📜 Licenciamiento de Todas las Capas</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+            <input type="checkbox" value="Orquestación Agéntica IA y Servidores MCP (AIVO / Acelera)" checked class="accent-violet-700">
+            <span class="font-medium">🤖 Agentes de IA & Conectores MCP</span>
+          </label>
+          <label class="flex items-center gap-2 p-2 rounded-lg border bg-violet-50/60 border-violet-200 cursor-pointer">
+            <input type="checkbox" value="Marcos Técnicos de Arquitectura y Políticas de Gobierno IA/IAM" checked class="accent-violet-700">
+            <span class="font-medium">📐 Marcos Técnicos & Políticas (TOGAF / ISO 42001)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 2. Levantamiento / Información del Cliente -->
+      <div class="card p-5 space-y-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-violet-700">2. Levantamiento de Información</span>
+        <textarea id="informacion_cliente_libre" rows="7" class="w-full border border-gray-300 rounded-xl p-3 text-xs leading-relaxed focus:outline-none focus:border-violet-600">Cliente: Corporación Financiera y Logística del Sur (550 empleados).
+Entorno Actual On-Premise:
+- Core ERP SAP y Base de Datos Oracle on-premise en Data Center local; Active Directory local para identidades.
+- Carpetas compartidas y correo en Microsoft 365.
+Requerimientos:
+- Estructurar arquitectura híbrida segura: mantener Oracle/SAP on-premise conectados vía VPN IPsec y servidores MCP, migrando 2 TB de datos históricos a un Data Warehouse en la nube.
+- Implementar gobierno de identidades (IAM federado con Active Directory) controlando qué puede consultar cada usuario y cada agente de IA.
+- Ciberseguridad estricta (DLP para datos financieros y PII) y entrega de Marcos Técnicos de Arquitectura, Política de Gobierno de IA y Política IAM.
+- Desplegar 2 agentes de IA (Auditoría de Compras y Atención Interna) con ~8,000 transacciones/día.</textarea>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Nube Base</label>
+            <select id="nube_preferida" class="w-full border border-gray-300 rounded-xl px-2.5 py-2 text-xs bg-white">
+              <option value="GCP">Google Cloud (GCP)</option>
+              <option value="AWS">AWS</option>
+              <option value="Azure">Microsoft Azure</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Horizonte BOOST</label>
+            <select id="horizonte_boost" class="w-full border border-gray-300 rounded-xl px-2.5 py-2 text-xs bg-white">
+              <option value="Versión Acelerada BOOST (~4 meses: M1-M4)">Acelerado (~4 meses)</option>
+              <option value="Roadmap Referencia (12 meses)">Referencia (12 meses)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-700 mb-1">Escenario Competitivo Detectado</label>
+          <select id="escenario_competitivo" class="w-full border border-gray-300 rounded-xl px-2.5 py-2 text-xs bg-white">
+            <option value="08 Equipo interno, CoE o no hacer nada (El más frecuente)">08 · Equipo interno / CoE / No hacer nada</option>
+            <option value="07 Herramientas sueltas y SaaS (Copilot, Gemini Enterprise, etc.)">07 · Herramientas sueltas / SaaS ya comprados</option>
+            <option value="06 Controles nativos (Microsoft Purview, Bedrock Guardrails)">06 · Solo controles nativos (Purview / Guardrails)</option>
+            <option value="05 Plataformas de gobierno de IA (ServiceNow, IBM watsonx, OneTrust)">05 · Plataformas de gobierno de IA</option>
+            <option value="04 Boutiques de gobierno de IA (Solo dejan el documento)">04 · Boutiques de gobierno (Solo papel)</option>
+            <option value="03 Partners de licencias (Venden herramienta cerrada)">03 · Partners de licencias</option>
+            <option value="02 Integradores tradicionales">02 · Integradores tradicionales</option>
+            <option value="01 Consultoras globales (Big Four)">01 · Consultoras globales (Big Four)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-700 mb-1">Modalidad de Servicio Comptech</label>
+          <select id="modalidad_comptech" class="w-full border border-gray-300 rounded-xl px-2.5 py-2 text-xs bg-white">
+            <option value="Híbrido Comptech + VTO Cliente (Transferencia de conocimiento)">Híbrido + Transferencia de conocimiento</option>
+            <option value="Comptech ejecuta el 100% (Consultoría y Operación Integral)">Comptech ejecuta el 100%</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 3. Costeo Consultoría como Servicio Comptech -->
+      <div class="card p-5">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-violet-700">3. Consultoría y Servicios Comptech</span>
+          <button onclick="agregarServicio()" class="text-[11px] font-semibold text-violet-700 hover:underline">+ Añadir ítem</button>
+        </div>
+        <div id="serviciosComptechList" class="space-y-2 text-xs"></div>
+
+        <button onclick="generarConsultoriaIntegral()" id="btnGenerar" class="mt-5 w-full btn-primary py-3 px-4 rounded-xl font-semibold text-sm shadow-md">
+          ✦ Generar Arquitectura Integral e Informe
+        </button>
+      </div>
+    </aside>
+
+    <!-- ==========================================
+         PANEL DERECHO: ENTREGABLES DE CONSULTORÍA
+    =========================================== -->
+    <section class="lg:col-span-8 space-y-6">
+
+      <div id="emptyState" class="card p-16 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-violet-100 text-violet-700 mx-auto flex items-center justify-center font-bold text-2xl mb-4">❖</div>
+        <h2 class="text-xl font-bold text-gray-900">Consultoría Integral: Infraestructura, Datos, Seguridad, IAM e IA</h2>
+        <p class="text-sm text-gray-500 max-w-lg mx-auto mt-2">
+          Selecciona los módulos requeridos y pega la información del cliente. El sistema acoplará almacenamiento, procesamiento, redes híbridas, IAM, ciberseguridad, licenciamiento, marcos técnicos y políticas de gobierno.
+        </p>
+      </div>
+
+      <div id="loaderState" class="hidden card p-16 text-center space-y-4">
+        <div class="animate-spin w-12 h-12 border-4 border-violet-700 border-t-transparent rounded-full mx-auto"></div>
+        <h3 class="text-lg font-bold text-violet-950">Acoplando Módulos de Arquitectura, Seguridad, IAM y FinOps...</h3>
+        <p class="text-xs text-gray-500 max-w-md mx-auto">Diseñando topología multi-capa, flujos de identidad y datos, políticas de gobierno, licenciamiento y cronograma BOOST Comptech.</p>
+      </div>
+
+      <div id="reportContainer" class="hidden space-y-6">
+
+        <!-- Resumen Ejecutivo -->
+        <div class="card p-6 border-l-4 border-l-violet-700">
+          <div class="flex flex-wrap justify-between items-start gap-4 mb-3">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-violet-700" id="lblCliente">CLIENTE</span>
+              <h1 class="text-2xl font-bold text-gray-900 mt-0.5" id="lblTituloProyecto">Arquitectura Integral</h1>
+            </div>
+            <div class="flex gap-3 text-right">
+              <div class="bg-gray-50 border rounded-xl px-3.5 py-2">
+                <div class="text-[11px] text-gray-500">Consultoría + Impl.</div>
+                <div class="font-bold text-base text-gray-900" id="kpiImpl">$0</div>
+              </div>
+              <div class="bg-violet-50 border border-violet-200 rounded-xl px-3.5 py-2">
+                <div class="text-[11px] text-violet-700">Licencias + Cloud/Mes</div>
+                <div class="font-bold text-base text-violet-900" id="kpiMes">$0/mes</div>
+              </div>
+              <div class="bg-indigo-950 text-white rounded-xl px-3.5 py-2">
+                <div class="text-[11px] text-indigo-200">TCO Año 1</div>
+                <div class="font-bold text-base" id="kpiTco">$0</div>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-700 leading-relaxed" id="lblResumen"></p>
+        </div>
+
+        <!-- 1. Diagrama Interactivo Multi-Capa -->
+        <div class="card p-6">
+          <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Topología Acoplada</span>
+              <h2 class="text-lg font-bold">1. Diagrama de Arquitectura (On-Premise · Datos · Procesamiento · IAM · Seguridad · IA)</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs no-print">
+              <button onclick="zoomDiagram('archRender', 0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 +</button>
+              <button onclick="zoomDiagram('archRender', -0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 -</button>
+              <button onclick="resetZoom('archRender')" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50">100%</button>
+              <button onclick="descargarSVG('archRender', 'arquitectura-integral-comptech.svg')" class="px-2.5 py-1 bg-violet-100 text-violet-800 rounded-lg font-semibold">SVG</button>
+            </div>
+          </div>
+
+          <div class="diagram-viewport border border-gray-200 rounded-xl p-4 min-h-[340px] flex items-center justify-center">
+            <div id="archRender" class="transition-transform origin-center"></div>
+          </div>
+
+          <!-- Filtros por Capa -->
+          <div class="mt-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <span class="text-xs font-bold text-gray-800">Explorar Componentes por Capa:</span>
+              <div class="flex flex-wrap gap-1.5 text-[11px]" id="filtrosCapa"></div>
+            </div>
+            <div id="componentesCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+          </div>
+        </div>
+
+        <!-- 2. Flujo de Trabajo y Control IAM/Seguridad -->
+        <div class="card p-6">
+          <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Ejecución, Identidad y Auditoría</span>
+              <h2 class="text-lg font-bold">2. Flujo de Trabajo Operativo (Validación IAM · Datos · Procesamiento · DLP)</h2>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs no-print">
+              <button onclick="zoomDiagram('flowRender', 0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 +</button>
+              <button onclick="zoomDiagram('flowRender', -0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 -</button>
+              <button onclick="resetZoom('flowRender')" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50">100%</button>
+              <button onclick="descargarSVG('flowRender', 'flujo-iam-datos-comptech.svg')" class="px-2.5 py-1 bg-violet-100 text-violet-800 rounded-lg font-semibold">SVG</button>
+            </div>
+          </div>
+
+          <div class="diagram-viewport border border-gray-200 rounded-xl p-4 min-h-[300px] flex items-center justify-center">
+            <div id="flowRender" class="transition-transform origin-center"></div>
+          </div>
+        </div>
+
+        <!-- 3. Entregables de Marcos Técnicos, Políticas de Gobierno IA y Políticas IAM -->
+        <div class="card p-6">
+          <div class="mb-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Consultoría como Servicio · Gobierno & Normativa</span>
+            <h2 class="text-lg font-bold">3. Marcos Técnicos, Políticas de Gobierno IA y Políticas IAM Entregables</h2>
+            <p class="text-xs text-gray-500">Comptech (Certificado ISO 9001 & 27001) estructura y deja operando los marcos bajo referencia TOGAF e ISO 42001.</p>
+          </div>
+          <div id="politicasGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
+        <!-- 4. Costeo de Todas las Capas, Licenciamiento y Comparativa Cloud -->
+        <div class="card p-6 space-y-5">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">FinOps & Licenciamiento Multi-Capa</span>
+            <h2 class="text-lg font-bold">4. Costeo Integral (Consultoría + Infraestructura + Datos + Seguridad + Licencias)</h2>
+          </div>
+
+          <div id="comparativaCloudGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+
+          <div class="overflow-x-auto border border-gray-200 rounded-xl">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-gray-50 border-b text-gray-600">
+                <tr>
+                  <th class="p-3">Capa Arquitectura</th>
+                  <th class="p-3">Componente / Servicio</th>
+                  <th class="p-3">Métrica / Modelo Licenciamiento</th>
+                  <th class="p-3">Origen Tarifa</th>
+                  <th class="p-3 text-right">Implementación</th>
+                  <th class="p-3 text-right">Mensual</th>
+                </tr>
+              </thead>
+              <tbody id="tablaCostosBody" class="divide-y"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 5. Cronograma BOOST e Inteligencia Competitiva -->
+        <div class="card p-6 space-y-5">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Project Management & Posicionamiento Comptech</span>
+            <h2 class="text-lg font-bold">5. Roadmap BOOST (M1 → M4 + Fase 3) y Argumentario frente a Competencia</h2>
+          </div>
+
+          <div class="overflow-x-auto border border-gray-200 rounded-xl">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead class="bg-violet-50 border-b text-violet-950">
+                <tr>
+                  <th class="p-3">Fase BOOST</th>
+                  <th class="p-3">Duración</th>
+                  <th class="p-3">Entregables Multi-Capa</th>
+                  <th class="p-3">Hito Formal</th>
+                  <th class="p-3">RACI</th>
+                </tr>
+              </thead>
+              <tbody id="tablaPmBody" class="divide-y"></tbody>
+            </table>
+          </div>
+
+          <!-- Tarjeta de Posicionamiento Competitivo -->
+          <div id="competenciaBox" class="bg-indigo-950 text-white rounded-xl p-5 text-xs space-y-2.5"></div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script>
+    mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: { primaryColor: '#ede9fe', primaryTextColor: '#1e1b4b', primaryBorderColor: '#6d28d9', lineColor: '#5b21b6', secondaryColor: '#f8fafc', tertiaryColor: '#f1f5f9' } });
+
+    const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+    const zoomLevels = { archRender: 1, flowRender: 1 };
+    let informeActual = null;
+
+    let serviciosComptech = [
+      { nombre: "Consultoría Marcos Técnicos, Gobierno IA e IAM", categoria: "Consultoría Marco/Políticas", unidad: "Entregable Único", precio_unitario_usd: 4500, cantidad: 1 },
+      { nombre: "Arquitectura Cloud, Datos, Redes y Ciberseguridad", categoria: "Ingeniería Cloud/Datos", unidad: "Hora", precio_unitario_usd: 135, cantidad: 60 },
+      { nombre: "Plataforma AIVO + Conectores MCP Empresariales", categoria: "Plataforma AIVO/MCP", unidad: "Mes", precio_unitario_usd: 1200, cantidad: 1 },
+      { nombre: "Lead AI Business Transformation + FDE (BOOST)", categoria: "Operación HIL", unidad: "Hora", precio_unitario_usd: 125, cantidad: 80 }
+    ];
+
+    function renderServicios() {
+      document.getElementById('serviciosComptechList').innerHTML = serviciosComptech.map((s, i) => `
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 space-y-1">
+          <div class="flex justify-between gap-1">
+            <input type="text" value="${s.nombre}" onchange="serviciosComptech[${i}].nombre=this.value" class="font-semibold text-gray-800 bg-transparent w-full focus:outline-none">
+            <button onclick="serviciosComptech.splice(${i},1);renderServicios()" class="text-red-500 font-bold">✕</button>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] text-gray-600">
+            <span>USD:</span>
+            <input type="number" value="${s.precio_unitario_usd}" onchange="serviciosComptech[${i}].precio_unitario_usd=parseFloat(this.value)||0;renderServicios()" class="w-16 border rounded px-1.5 py-0.5 bg-white">
+            <span>x</span>
+            <input type="number" value="${s.cantidad}" onchange="serviciosComptech[${i}].cantidad=parseFloat(this.value)||0;renderServicios()" class="w-14 border rounded px-1.5 py-0.5 bg-white">
+            <span>(${s.unidad})</span>
+            <span class="ml-auto font-bold text-violet-800">${fmt(s.precio_unitario_usd * s.cantidad)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function agregarServicio() {
+      serviciosComptech.push({ nombre: "Servicio Especializado Comptech", categoria: "Ciberseguridad/IAM", unidad: "Hora", precio_unitario_usd: 130, cantidad: 24 });
+      renderServicios();
+    }
+
+    function zoomDiagram(id, delta) {
+      zoomLevels[id] = Math.min(2, Math.max(0.5, zoomLevels[id] + delta));
+      document.getElementById(id).style.transform = `scale(${zoomLevels[id]})`;
+    }
+
+    function resetZoom(id) {
+      zoomLevels[id] = 1;
+      document.getElementById(id).style.transform = `scale(1)`;
+    }
+
+    function descargarSVG(containerId, filename) {
+      const svg = document.getElementById(containerId).querySelector('svg');
+      if (!svg) return;
+      const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+    }
+
+    async function renderMermaidSafe(elementId, code, uid) {
+      const el = document.getElementById(elementId);
+      try {
+        const cleanCode = code.replace(/```mermaid/g, '').replace(/```/g, '').trim();
+        const { svg } = await mermaid.render(uid, cleanCode);
+        el.innerHTML = svg;
+      } catch (err) {
+        el.innerHTML = `<pre class="text-xs text-red-600 p-3 bg-red-50 rounded">${code}</pre>`;
+      }
+    }
+
+    async function generarConsultoriaIntegral() {
+      const modulos = Array.from(document.querySelectorAll('#modulosContainer input:checked')).map(cb => cb.value);
+      if (modulos.length === 0) {
+        alert("Selecciona al menos un módulo técnico para acoplar.");
+        return;
+      }
+
+      const payload = {
+        informacion_cliente_libre: document.getElementById('informacion_cliente_libre').value,
+        modulos_acoplados: modulos,
+        nube_preferida: document.getElementById('nube_preferida').value,
+        escenario_competitivo: document.getElementById('escenario_competitivo').value,
+        modalidad_comptech: document.getElementById('modalidad_comptech').value,
+        horizonte_boost: document.getElementById('horizonte_boost').value,
+        servicios_comptech: serviciosComptech
+      };
+
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('reportContainer').classList.add('hidden');
+      document.getElementById('loaderState').classList.remove('hidden');
+      document.getElementById('btnGenerar').disabled = true;
+
+      try {
+        const res = await fetch('/api/generar-consultoria-integral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(await res.text());
+        informeActual = await res.json();
+        await renderInforme(informeActual);
+      } catch (err) {
+        alert("Error generando consultoría integral: " + err.message);
+      } finally {
+        document.getElementById('loaderState').classList.add('hidden');
+        document.getElementById('btnGenerar').disabled = false;
+      }
+    }
+
+    async function renderInforme(d) {
+      document.getElementById('lblCliente').textContent = `CLIENTE: ${d.cliente_detectado} · CONSULTORÍA INTEGRAL COMPTECH`;
+      document.getElementById('lblTituloProyecto').textContent = d.titulo_proyecto;
+      document.getElementById('lblResumen').textContent = d.resumen_ejecutivo_consultoria;
+      document.getElementById('kpiImpl').textContent = fmt(d.total_implementacion_usd);
+      document.getElementById('kpiMes').textContent = fmt(d.total_mensual_usd) + '/mes';
+      document.getElementById('kpiTco').textContent = fmt(d.tco_anual_usd);
+
+      await renderMermaidSafe('archRender', d.diagrama_arquitectura_mermaid, 'svgArch_' + Date.now());
+      await renderMermaidSafe('flowRender', d.diagrama_flujo_trabajo_mermaid, 'svgFlow_' + Date.now());
+
+      // Filtros por capa
+      const capas = ['Todas', ...new Set(d.arquitectura_multi_capa.map(c => c.capa_arquitectura))];
+      document.getElementById('filtrosCapa').innerHTML = capas.map(c => `
+        <button onclick="filtrarCapa('${c}')" class="px-2.5 py-1 rounded-full border border-violet-200 bg-violet-50 text-violet-900 hover:bg-violet-700 hover:text-white font-semibold">
+          ${c}
+        </button>
+      `).join('');
+      filtrarCapa('Todas');
+
+      // Marcos Técnicos y Políticas
+      document.getElementById('politicasGrid').innerHTML = d.marcos_y_politicas_entregables.map(p => `
+        <div class="border border-violet-200 bg-violet-50/40 rounded-xl p-4 text-xs">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-violet-700">${p.dominio}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-white border font-semibold text-gray-700">${p.modalidad_entrega}</span>
+          </div>
+          <div class="font-bold text-sm text-gray-900 mb-1">📑 ${p.nombre_entregable}</div>
+          <p class="text-gray-600 leading-relaxed">${p.alcance_y_controles}</p>
+        </div>
+      `).join('');
+
+      // Comparativa Cloud
+      document.getElementById('comparativaCloudGrid').innerHTML = d.comparativa_proveedores_cloud.map(c => `
+        <div class="border ${c.es_recomendado ? 'border-2 border-violet-700 bg-violet-50/30' : 'border-gray-200'} rounded-xl p-4 text-xs">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-sm">☁️ ${c.proveedor}</span>
+            ${c.es_recomendado ? '<span class="px-2 py-0.5 rounded-full bg-violet-700 text-white text-[10px] font-bold">Recomendado</span>' : ''}
+          </div>
+          <p class="text-gray-600 mb-3">${c.justificacion_integral}</p>
+          <div class="space-y-1 border-t pt-2">
+            <div class="flex justify-between"><span>Consultoría + Impl.:</span><span class="font-bold">${fmt(c.inversion_implementacion_usd)}</span></div>
+            <div class="flex justify-between"><span>Licencias + Cloud/Mes:</span><span class="font-bold text-violet-700">${fmt(c.costo_recurrente_mensual_usd)}/mes</span></div>
+            <div class="flex justify-between"><span>TCO Año 1:</span><span class="font-bold">${fmt(c.tco_anual_usd)}</span></div>
+          </div>
+        </div>
+      `).join('');
+
+      // Tabla Financiera Multi-Capa
+      document.getElementById('tablaCostosBody').innerHTML = d.arquitectura_multi_capa.map(item => `
+        <tr>
+          <td class="p-2.5 font-semibold text-gray-800">${item.capa_arquitectura}</td>
+          <td class="p-2.5 font-bold text-violet-900">${item.nombre_componente} <span class="text-gray-400 font-normal">(${item.proveedor_o_origen})</span></td>
+          <td class="p-2.5 text-gray-600">${item.detalle_licenciamiento_o_metrica}</td>
+          <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-gray-100 text-[10px] font-semibold">${item.origen_tarifa}</span></td>
+          <td class="p-2.5 text-right font-semibold">${fmt(item.costo_implementacion_usd)}</td>
+          <td class="p-2.5 text-right font-bold">${fmt(item.costo_mensual_usd)}/mes</td>
+        </tr>
+      `).join('');
+
+      // Cronograma PM BOOST
+      document.getElementById('tablaPmBody').innerHTML = d.cronograma_pm_boost.map(f => `
+        <tr>
+          <td class="p-2.5 font-bold text-gray-900">${f.fase_boost}</td>
+          <td class="p-2.5 text-gray-600">${f.duracion}</td>
+          <td class="p-2.5 text-gray-700">${f.entregables_multi_capa.join(' · ')}</td>
+          <td class="p-2.5 font-semibold text-violet-800">${f.hito_formal}</td>
+          <td class="p-2.5 text-gray-600">${f.responsables_raci}</td>
+        </tr>
+      `).join('');
+
+      // Inteligencia Competitiva
+      const comp = d.inteligencia_competitiva;
+      document.getElementById('competenciaBox').innerHTML = `
+        <div class="flex flex-wrap justify-between items-center gap-2 border-b border-indigo-800 pb-2">
+          <span class="font-bold uppercase tracking-wider text-violet-300">🎯 Estrategia Competitiva Comptech · ${comp.arquetipo_competidor}</span>
+          <span class="text-[11px] bg-indigo-900 px-2.5 py-0.5 rounded-full text-indigo-200">Comptech ISO 9001 & 27001</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div class="font-semibold text-emerald-300 mb-0.5">✓ En qué gana Comptech:</div>
+            <p class="text-indigo-100 leading-relaxed">${comp.en_que_gana_comptech}</p>
+          </div>
+          <div>
+            <div class="font-semibold text-amber-300 mb-0.5">⚠️ Riesgo a vigilar en la cuenta:</div>
+            <p class="text-indigo-100 leading-relaxed">${comp.riesgo_a_vigilar}</p>
+          </div>
+        </div>
+        <div class="bg-indigo-900/70 rounded-lg p-3 space-y-1.5">
+          <div><span class="font-bold text-violet-300">💬 Frase de Posicionamiento:</span> "${comp.frase_posicionamiento}"</div>
+          <div><span class="font-bold text-amber-300">❓ Pregunta Trampa Clave para el Cliente:</span> "${comp.pregunta_trampa_clave}"</div>
+        </div>
+      `;
+
+      document.getElementById('reportContainer').classList.remove('hidden');
+      document.getElementById('btnPdf').classList.remove('hidden');
+      document.getElementById('btnMd').classList.remove('hidden');
+    }
+
+    function filtrarCapa(capa) {
+      const lista = capa === 'Todas'
+        ? informeActual.arquitectura_multi_capa
+        : informeActual.arquitectura_multi_capa.filter(c => c.capa_arquitectura === capa);
+
+      document.getElementById('componentesCardsGrid').innerHTML = lista.map(c => `
+        <div class="border border-gray-200 rounded-xl p-3 bg-gray-50/60 text-xs hover:border-violet-400 transition">
+          <div class="flex justify-between items-start gap-2 mb-1">
+            <span class="font-bold text-violet-950">${c.nombre_componente}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-white border text-gray-700">${c.capa_arquitectura}</span>
+          </div>
+          <p class="text-gray-600 text-[11px] mb-1.5">${c.referencia_funcional}</p>
+          <div class="text-[10px] text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded mb-2">📜 ${c.detalle_licenciamiento_o_metrica}</div>
+          <div class="flex justify-between text-[11px] font-semibold text-gray-800 border-t pt-1.5">
+            <span>${c.proveedor_o_origen} · ${c.origen_tarifa}</span>
+            <span class="text-violet-700">${fmt(c.costo_implementacion_usd)} impl. | ${fmt(c.costo_mensual_usd)}/mes</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function exportarMarkdown() {
+      if (!informeActual) return;
+      const d = informeActual;
+      const md = `# ${d.titulo_proyecto}\n**Cliente:** ${d.cliente_detectado} | **Consultoría:** Comptech\n\n## Resumen Ejecutivo\n${d.resumen_ejecutivo_consultoria}\n\n- **Consultoría + Implementación:** ${fmt(d.total_implementacion_usd)}\n- **Licenciamiento + Cloud Mensual:** ${fmt(d.total_mensual_usd)}/mes\n- **TCO Año 1:** ${fmt(d.tco_anual_usd)}\n\n## Diagrama de Arquitectura\n\`\`\`mermaid\n${d.diagrama_arquitectura_mermaid}\n\`\`\`\n\n## Flujo de Trabajo e IAM\n\`\`\`mermaid\n${d.diagrama_flujo_trabajo_mermaid}\n\`\`\`\n\n## Marcos Técnicos y Políticas Entregables\n` +
+        d.marcos_y_politicas_entregables.map(p => `- **${p.nombre_entregable}** (${p.dominio}): ${p.alcance_y_controles}`).join('\n');
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Consultoria-Integral-Comptech-${d.cliente_detectado.replace(/\s+/g, '-')}.md`;
+      a.click();
+    }
+
+    renderServicios();
+  </script>
+</body>
+</html>
