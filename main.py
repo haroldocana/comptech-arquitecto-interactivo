@@ -18,7 +18,8 @@ app.add_middleware(
 )
 
 client = genai.Client()
-MODEL_ID = "gemini-2.5-flash"
+PRIMARY_MODEL_ID = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+FALLBACK_MODELS = [PRIMARY_MODEL_ID, "gemini-3.8-flash", "gemini-4-hydrogen", "gemini-3.6-flash"]
 
 # ==========================================
 # 1. TARIFARIO MULTI-CAPA DE LISTA (USD)
@@ -84,10 +85,10 @@ class ProyectoConsultoriaRequest(BaseModel):
 
 class DisenoAgenteIA(BaseModel):
     nombre_agente: str
-    proposito_negocio: str = Field(description="Objetivo exacto de negocio y problema que resuelve")
-    modelo_ia_y_herramientas: str = Field(description="Ej: Gemini 2.5 Flash + Vertex AI + Servidores MCP")
+    proposito_negocio: str = Field(description="Objetivo exacto de negocio, explicación sencilla para el cliente y problema que resuelve")
+    modelo_ia_y_herramientas: str = Field(description="Tipo de modelo IA (Razonamiento Profundo, Baja Latencia o Multimodal), embeddings y conectores MCP/API/DB exactos")
     flujo_automatizacion_proceso: str = Field(description="Paso a paso de qué automatiza, disparadores, acciones y validación Human-in-the-loop")
-    consumo_estimado_mes: str = Field(description="Tokens estimados, llamadas API/MCP y costo mensual proyectado")
+    consumo_estimado_mes: str = Field(description="Dimensionamiento: ejecuciones/mes, tokens entrada/salida, latencia/SLA y costo mensual proyectado")
     nivel_riesgo_ia: str = Field(description="Bajo | Medio | Alto")
 
 class PasoFundacionCloudIAM(BaseModel):
@@ -125,7 +126,7 @@ class AlcanceYTerminosPM(BaseModel):
     excluye_del_alcance: List[str]
     prerequisitos_cliente: List[str]
     terminos_despliegue_y_entrega: str
-    sugerencias_estrategicas_consultor: List[str] = Field(description="Recomendaciones proactivas de arquitectura, optimización de costos y escalabilidad")
+    sugerencias_estrategicas_consultor: List[str] = Field(description="Recomendaciones proactivas de arquitectura, modelos, conectores, dimensionamiento y optimización de costos")
 
 class ComparativaProveedor(BaseModel):
     proveedor: str
@@ -182,12 +183,18 @@ def ejecutar_agente(system_instruction: str, prompt: str, schema=None):
         config.response_mime_type = "application/json"
         config.response_schema = schema
 
-    response = client.models.generate_content(
-        model=MODEL_ID,
-        contents=prompt,
-        config=config
-    )
-    return response.text
+    last_err = None
+    for model_name in dict.fromkeys(FALLBACK_MODELS):
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=config
+            )
+            return response.text
+        except Exception as err:
+            last_err = err
+    raise last_err
 
 @app.get("/api/tarifario-multi-capa")
 async def obtener_tarifario():
@@ -230,27 +237,27 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
     try:
         # AGENTE 1: Principal Cloud, Landing Zone (Org/Projects/IAM/Network) & AI Systems Engineer
         ingenieria_integral = ejecutar_agente(
-            """Eres Principal Cloud & AI Solutions Architect en Comptech.
-            Diseña:
-            1) La Landing Zone completa desde cero: creación de Organización Cloud, estructura de Carpetas y Proyectos (Dev, QA, Prod), 
-               Usuarios, Grupos, Service Accounts para agentes IA, Permisos RBAC/Zero-Trust, Políticas de Seguridad (Org Policies, KMS, DLP, VPC Service Controls) 
+            """Eres Principal Cloud & AI Systems Architect en Comptech.
+            Explica en lenguaje claro para el negocio y con rigor técnico para ingeniería:
+            1) La Landing Zone completa desde cero: creación de Organización Cloud, estructura de Carpetas y Proyectos (Dev, QA, Prod),
+               Usuarios, Grupos, Service Accounts para agentes IA, Permisos RBAC/Zero-Trust, Políticas de Seguridad (Org Policies, KMS, DLP, VPC Service Controls)
                y el método exacto de conectividad seleccionado (VPN IPsec HA, integración con Google Workspace, Office 365 / Entra ID, o Enlace Dedicado Cloud Interconnect/Direct Connect).
-            2) El diseño detallado de cada Agente de IA: propósito de negocio, flujo de automatización del proceso end-to-end, modelos/MCP y consumo mensual exacto.
-            3) Dimensionamiento de costos de todas las capas acopladas.""",
-            f"Diseña la arquitectura desde fundación hasta agentes IA y consumo:\n{contexto}"
+            2) El diseño detallado de cada Agente de IA: propósito de negocio, tipos de modelos IA (razonamiento vs. baja latencia/multimodal), conectores MCP/API/DB exactos,
+               flujo de automatización paso a paso, validación Human-in-the-loop y dimensionamiento (ejecuciones/mes, tokens, latencia y costo mensual).
+            3) Dimensionamiento de costos y capacidad de todas las capas acopladas.""",
+            f"Diseña la arquitectura desde fundación hasta agentes IA, modelos, conectores y dimensionamiento:\n{contexto}"
         )
 
         # AGENTE 2: Senior Project Manager (PMP/BOOST) & Director de Consultoría Comptech
         sys_pm_consolidacion = """Eres Senior Project Manager (PMP / Agile BOOST) y Director de Consultoría en Comptech.
-        Consolida todo el informe ejecutivo y técnico en JSON.
-        REGLAS ESTRICTAS:
-        1. En 'diseno_agentes_y_automatizacion', detalla para cada agente su propósito, flujo de automatización paso a paso, consumo mensual estimado y nivel de riesgo. (Si el escenario no incluye IA, incluye al menos 1 propuesta sugerida como fase futura).
-        2. En 'fundacion_cloud_iam_y_conectividad', detalla paso a paso en días: (1) Creación de Organización y jerarquía, (2) Proyectos separados por ambiente, (3) Usuarios y Service Accounts, (4) Políticas IAM y Seguridad, y (5) Conectividad específica (VPN / Workspace / Office 365 / Enlace Dedicado).
-        3. En 'alcance_terminos_y_sugerencias', define con rigor de Project Manager: qué incluye el alcance, qué excluye explícitamente, prerrequisitos del cliente, términos de despliegue/paso a producción y sugerencias estratégicas proactivas.
-        4. En 'matriz_riesgos_pm', identifica riesgos técnicos, de red, seguridad/IAM y adopción con su mitigación concreta.
-        5. En 'diagrama_arquitectura_mermaid' usa 'flowchart TB' limpio (sin paréntesis () ni caracteres raros dentro de etiquetas).
-        6. En 'diagrama_flujo_trabajo_mermaid' usa 'sequenceDiagram' mostrando identidad, conectividad, automatización y auditoría.
-        7. Respeta exactamente los precios de 'servicios_comptech'."""
+        Consolida todo el informe en JSON siguiendo la ESTRUCTURA OBLIGATORIA DE 7 SECCIONES para cada negocio:
+        1. 'diseno_agentes_y_automatizacion': propósito en lenguaje claro, tipos de modelos IA y conectores MCP/API exactos, flujo de automatización paso a paso, dimensionamiento mensual y nivel de riesgo. (Si el escenario no incluye IA, incluye al menos 1 propuesta sugerida como fase futura).
+        2. 'fundacion_cloud_iam_y_conectividad': paso a paso en días: (1) Creación de Organización y jerarquía, (2) Proyectos separados por ambiente, (3) Usuarios y Service Accounts, (4) Políticas IAM y Seguridad, y (5) Conectividad específica (VPN / Workspace / Office 365 / Enlace Dedicado).
+        3. 'diagrama_arquitectura_mermaid' en 'flowchart TB' limpio (sin paréntesis () ni caracteres raros dentro de etiquetas).
+        4. 'diagrama_flujo_trabajo_mermaid' en 'sequenceDiagram' mostrando identidad, conectividad, conectores/modelos, automatización y auditoría.
+        5. 'marcos_y_politicas_entregables': marcos técnicos y políticas de gobierno IA/IAM.
+        6. 'arquitectura_multi_capa' y 'comparativa_proveedores_cloud': dimensionamiento de métricas/licenciamiento y costos respetando exactamente 'servicios_comptech'.
+        7. 'alcance_terminos_y_sugerencias', 'matriz_riesgos_pm' y 'cronograma_pm_boost': alcance, exclusiones, prerrequisitos, términos de despliegue, sugerencias estratégicas, riesgos y fases BOOST."""
 
         resultado = ejecutar_agente(
             sys_pm_consolidacion,
