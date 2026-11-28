@@ -215,7 +215,7 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
         raise HTTPException(status_code=500, detail="Falta configurar GEMINI_API_KEY en Render.")
 
     servicios_txt = "\n".join([
-        f"- {s.nombre} [{s.categoria}]: ${s.precio_unitario_usd} USD / {s.unidad} x {s.cantidad} =${s.precio_unitario_usd * s.cantidad:.2f} USD"
+        f"- {s.nombre} [{s.categoria}]: ${s.precio_unitario_usd} USD / {s.unidad} x {s.cantidad} = ${s.precio_unitario_usd * s.cantidad:.2f} USD"
         for s in req.servicios_comptech
     ])
 
@@ -263,7 +263,7 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
         2. 'fundacion_cloud_iam_y_conectividad': paso a paso en días: (1) Creación de Organización y jerarquía, (2) Proyectos separados por ambiente, (3) Usuarios y Service Accounts, (4) Políticas IAM y Seguridad, y (5) Conectividad específica (VPN / Workspace / Office 365 / Enlace Dedicado).
         3. 'diagrama_arquitectura_mermaid' en 'flowchart TB' limpio (sin paréntesis () ni caracteres raros dentro de etiquetas).
         4. 'diagrama_flujo_trabajo_mermaid' en 'sequenceDiagram' mostrando identidad, conectividad, conectores/modelos, automatización y auditoría.
-        5. 'marcos_y_politicas_entregables': marcos técnicos y políticas de gobierno IA/IAM.
+        5. 'marcos_y_politicas_entregables': marcos técnicos, procedimientos y políticas de gobierno IA/IAM.
         6. 'arquitectura_multi_capa' y 'comparativa_proveedores_cloud': dimensionamiento de métricas/licenciamiento y costos respetando exactamente 'servicios_comptech'.
         7. 'alcance_terminos_y_sugerencias', 'matriz_riesgos_pm' y 'cronograma_pm_boost': alcance, exclusiones, prerrequisitos, términos de despliegue, sugerencias estratégicas (incluyendo estrategia de oferta en Cloud Marketplace), riesgos y fases BOOST."""
 
@@ -275,14 +275,28 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
 
         data = json.loads(resultado)
 
-        # Blindaje numérico de totales (Implementación, Mensual y TCO Año 1)
-        impl_componentes = sum(float(c.get("costo_implementacion_usd", 0) or 0) for c in data.get("arquitectura_multi_capa", []))
-        impl_servicios = sum(float(s.precio_unitario_usd * s.cantidad) for s in req.servicios_comptech if "mes" not in s.unidad.lower())
-        mensual_componentes = sum(float(c.get("costo_mensual_usd", 0) or 0) for c in data.get("arquitectura_multi_capa", []))
-        mensual_servicios = sum(float(s.precio_unitario_usd * s.cantidad) for s in req.servicios_comptech if "mes" in s.unidad.lower())
+        # Cálculo determinista de costos a partir de los componentes y servicios
+        impl_componentes = sum(
+            float(c.get("costo_implementacion_usd", 0) or 0)
+            for c in data.get("arquitectura_multi_capa", [])
+        )
+        mensual_componentes = sum(
+            float(c.get("costo_mensual_usd", 0) or 0)
+            for c in data.get("arquitectura_multi_capa", [])
+        )
 
-        total_impl = round(max(float(data.get("total_implementacion_usd", 0) or 0), impl_componentes + impl_servicios), 2)
-        total_mes = round(max(float(data.get("total_mensual_usd", 0) or 0), mensual_componentes + mensual_servicios), 2)
+        nombres_en_tabla = {
+            (c.get("nombre_componente") or "").strip().lower()
+            for c in data.get("arquitectura_multi_capa", [])
+        }
+        impl_servicios_extra = sum(
+            float(s.precio_unitario_usd * s.cantidad)
+            for s in req.servicios_comptech
+            if "mes" not in s.unidad.lower() and s.nombre.strip().lower() not in nombres_en_tabla
+        )
+
+        total_impl = round(impl_componentes + impl_servicios_extra, 2)
+        total_mes = round(mensual_componentes, 2)
         tco_anual = round(total_impl + (total_mes * 12), 2)
 
         data["total_implementacion_usd"] = total_impl
