@@ -191,6 +191,52 @@
           </div>
         </div>
 
+        <!-- WASABI, CROWDSTRIKE, 360 MSP, OTRAS MARCAS Y MARKETPLACE -->
+        <div class="border border-violet-200 rounded-xl p-3.5 bg-violet-50/30 space-y-2.5">
+          <div class="text-xs font-bold text-violet-950">🧩 Wasabi, CrowdStrike, 360 MSP, Otras Marcas y Marketplace</div>
+          <div class="help-box">
+            <b>Guía rápida:</b> Marca qué plataformas ya existen en el cliente o deseas incorporar, indica otras marcas/sistemas y define cómo ofrecer el servicio en el Cloud Marketplace (pago con compromiso cloud, horas/paquete o suscripción mensual).
+          </div>
+
+          <div class="grid grid-cols-1 gap-1.5 text-[11px]">
+            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border bg-white cursor-pointer">
+              <input type="checkbox" id="plat_wasabi" checked class="accent-violet-700">
+              <span><b>Wasabi Hot Cloud Storage</b> (S3 compatible, sin cobro de egreso estándar, mín. 1 TB / 90 días)</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border bg-white cursor-pointer">
+              <input type="checkbox" id="plat_crowdstrike" checked class="accent-violet-700">
+              <span><b>CrowdStrike Falcon</b> (EDR / XDR / Identity / Cloud / MDR / Telemetría y respuesta)</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border bg-white cursor-pointer">
+              <input type="checkbox" id="plat_360msp" checked class="accent-violet-700">
+              <span><b>Plataforma 360 MSP</b> (Gestión unificada, parches, backups, endpoints y monitoreo)</span>
+            </label>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Otras Marcas / Sistemas del Cliente y Tipo de Integración</label>
+            <input type="text" id="otras_marcas_cliente" value="SAP / Odoo, Microsoft Defender / SentinelOne / Bitdefender, SharePoint / Drive, SQL/Oracle (Lectura RAG + MCP controlado)" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Esquema en Cloud Marketplace</label>
+              <select id="modelo_marketplace" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white">
+                <option value="Private Offer: Servicios Profesionales + Suscripción Mensual (Consumo Cloud)">Private Offer: Servicios + Mensual</option>
+                <option value="Paquete de Servicios Profesionales (Fijo o Bolsa de Horas)">Servicios Profesionales (Fijo / Horas)</option>
+                <option value="Suscripción SaaS / MSP + Medición por Consumo (Tokens / TB / Endpoints)">Suscripción + Consumo Medido</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-600 mb-0.5">Uso de Presupuesto Cloud</label>
+              <select id="presupuesto_cloud_mp" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white">
+                <option value="Imputable a Compromiso Anual Cloud (MDF / Co-sell)">Compromiso Cloud / Co-sell</option>
+                <option value="Facturación Directa en Marketplace">Facturación Directa Marketplace</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <!-- BLOQUE C: CONSTRUCTOR ESTRUCTURADO DE AGENTES IA, MODELOS Y CONECTORES -->
         <div id="sec-agentico" class="border border-violet-300 rounded-xl p-3.5 bg-violet-50/40 space-y-2.5">
           <div class="flex justify-between items-center">
@@ -584,7 +630,6 @@
     let informeActual = null;
     let tipoEscenarioActual = "Proyecto Combinado Integral (Fundación + Migración + Agentes IA + IAM)";
 
-    // Lista dinámica de agentes con tipo de modelo, conectores y dimensionamiento
     let agentesDiseno = [
       {
         nombre: "Agente Auditoría de Compras SAP",
@@ -763,6 +808,17 @@
       let texto = `TIPO DE PROYECTO: ${tipoEscenarioActual}\n`;
       texto += `CLIENTE: ${document.getElementById('cli_empresa').value} | USUARIOS: ${document.getElementById('cli_usuarios').value}\n`;
       texto += `CONEXIÓN E IDENTIDAD PRINCIPAL: ${document.getElementById('metodo_conexion_principal').value}\n`;
+
+      const plataformasSel = [
+        document.getElementById('plat_wasabi')?.checked ? 'Wasabi Hot Cloud Storage (S3, sin egreso estándar, mín. 1TB/90d)' : null,
+        document.getElementById('plat_crowdstrike')?.checked ? 'CrowdStrike Falcon (EDR/XDR/Identity/MDR)' : null,
+        document.getElementById('plat_360msp')?.checked ? 'Plataforma 360 MSP (Gestión/Parches/Backups/Monitoreo)' : null
+      ].filter(Boolean);
+
+      texto += `\n[PLATAFORMAS TERCEROS, OTRAS MARCAS Y MARKETPLACE]\n`;
+      texto += `- Plataformas seleccionadas: ${plataformasSel.length ? plataformasSel.join(' | ') : 'Ninguna marcada'}\n`;
+      texto += `- Otras marcas / sistemas del cliente: ${document.getElementById('otras_marcas_cliente')?.value || 'No especificado'}\n`;
+      texto += `- Esquema de oferta en Marketplace: ${document.getElementById('modelo_marketplace')?.value || 'Private Offer'} | ${document.getElementById('presupuesto_cloud_mp')?.value || ''}\n`;
 
       if (document.getElementById('chk-agentico').checked) {
         texto += `\n[ESPECIFICACIÓN DETALLADA DE AGENTES IA, MODELOS, CONECTORES Y DIMENSIONAMIENTO]\n`;
