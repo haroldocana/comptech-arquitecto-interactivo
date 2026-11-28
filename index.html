@@ -36,13 +36,14 @@
             <span class="text-gray-300">|</span>
             <span class="text-violet-700">Enterprise Architecture, Cybersecurity, AI & PMO Studio</span>
           </div>
-          <div class="text-xs text-gray-500">Fundación Cloud · IAM · Conectividad · Ingeniería Agéntica · Riesgos y Alcance BOOST</div>
+          <div class="text-xs text-gray-500">Fundación Cloud · IAM · Conectividad · Ingeniería Agéntica · Costo Blindado y Cronograma BOOST</div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 no-print">
+      <div class="flex flex-wrap items-center gap-2 no-print">
+        <button onclick="exportarDoc()" id="btnDoc" class="hidden px-3.5 py-2 rounded-xl border border-violet-300 bg-violet-50 text-violet-900 text-xs font-semibold hover:bg-violet-100">📄 Descargar (.DOC)</button>
         <button onclick="exportarMarkdown()" id="btnMd" class="hidden px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-semibold hover:bg-gray-50">⬇️ Informe (.MD)</button>
-        <button onclick="window.print()" id="btnPdf" class="hidden btn-primary px-4 py-2 rounded-xl text-xs font-semibold shadow-sm">🖨️ Imprimir / Guardar PDF</button>
+        <button onclick="window.print()" id="btnPdf" class="hidden btn-primary px-4 py-2 rounded-xl text-xs font-semibold shadow-sm">🖨️ Imprimir / PDF</button>
       </div>
     </div>
   </header>
@@ -342,21 +343,25 @@
           </div>
         </div>
 
-        <!-- BLOQUE E y F: LICENCIAMIENTO Y MARCOS -->
+        <!-- BLOQUE E y F: LICENCIAMIENTO, BLINDAJE DE COSTO Y MARCOS -->
         <div id="sec-licencias" class="border border-violet-200 rounded-xl p-3.5 bg-violet-50/30 space-y-2">
-          <div class="text-xs font-bold text-violet-950">📜 Licenciamiento Multi-Capa y Dimensionamiento de Consumo</div>
+          <div class="text-xs font-bold text-violet-950">📜 Licenciamiento Multi-Capa y Costo Blindado</div>
           <div class="help-box">
-            <b>¿Qué significa esto?</b> Qué licencias ya tiene la empresa (ej. Google Workspace o Microsoft 365) y qué consumos variables se deben dimensionar (tokens de IA, bases de datos, enlaces y conectores MCP).
+            <b>¿Qué significa esto?</b> Define qué licencias ya tiene la empresa, qué consumos variables se dimensionan y qué porcentaje de blindaje (colchón FinOps) se aplica para evitar sobrecostos inesperados.
           </div>
-          <input type="text" id="lic_detalle" value="Tienen Workspace/M365; cotizar consumo Cloud, DB, Tokens LLM, Enlaces y Conectores MCP" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+          <input type="text" id="lic_detalle" value="Tienen Workspace/M365; cotizar consumo Cloud, DB, Tokens LLM, Enlaces, Conectores MCP y Wasabi/CrowdStrike" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+          <div class="flex items-center justify-between gap-2 pt-1">
+            <label class="text-[11px] font-semibold text-gray-700">Colchón / Blindaje Consumo Mensual (%)</label>
+            <input type="number" id="blindaje_pct" value="15" min="0" max="50" class="w-20 border rounded-lg px-2 py-1 text-xs bg-white text-right font-bold text-violet-900">
+          </div>
         </div>
 
         <div id="sec-marcos" class="border border-violet-200 rounded-xl p-3.5 bg-violet-50/30 space-y-2">
-          <div class="text-xs font-bold text-violet-950">📐 Marcos Técnicos y Políticas</div>
+          <div class="text-xs font-bold text-violet-950">📐 Marcos Técnicos, Procedimientos y Políticas</div>
           <div class="help-box">
-            <b>¿Qué significa esto?</b> Las reglas de diseño, calidad y seguridad que guiarán el proyecto para que sea auditable y escalable.
+            <b>¿Qué significa esto?</b> Las reglas de diseño, procedimientos operativos y seguridad que guiarán el proyecto para que sea auditable y escalable.
           </div>
-          <input type="text" id="mar_lista" value="Marco Técnico Arquitectura (TOGAF), Política Gobierno IA (ISO 42001), Política IAM y Seguridad (ISO 27001)" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
+          <input type="text" id="mar_lista" value="Marco Técnico Arquitectura (TOGAF), Política Gobierno IA (ISO 42001), Política IAM y Seguridad (ISO 27001), Procedimientos Operativos" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white">
         </div>
 
         <div>
@@ -391,41 +396,46 @@
         <div class="w-14 h-14 rounded-2xl bg-violet-100 text-violet-700 mx-auto flex items-center justify-center font-bold text-2xl mb-4">❖</div>
         <h2 class="text-xl font-bold text-gray-900">Consultoría Integral: Estructura Obligatoria por Negocio</h2>
         <p class="text-sm text-gray-500 max-w-lg mx-auto mt-2">
-          Cada informe generado sigue una estructura obligatoria de <b>7 secciones</b>: (1) Agentes, Modelos, Conectores y Dimensionamiento, (2) Fundación Cloud e IAM, (3) Arquitectura, (4) Flujo Operativo, (5) Marcos y Políticas, (6) Costos y Comparativa Cloud, y (7) Alcance, Riesgos y Cronograma BOOST.
+          Cada informe generado sigue una estructura obligatoria de <b>7 secciones</b>: (1) Agentes, Modelos, Conectores y Dimensionamiento, (2) Fundación Cloud e IAM, (3) Arquitectura y Diagramas, (4) Flujo Operativo, (5) Marcos, Seguridad y Procedimientos, (6) Costo Blindado y Comparativa Cloud, y (7) Alcance, Riesgos y Cronograma BOOST.
         </p>
       </div>
 
       <div id="loaderState" class="hidden card p-16 text-center space-y-4">
         <div class="animate-spin w-12 h-12 border-4 border-violet-700 border-t-transparent rounded-full mx-auto"></div>
         <h3 class="text-lg font-bold text-violet-950">Construyendo Informe con Estructura Obligatoria...</h3>
-        <p class="text-xs text-gray-500 max-w-md mx-auto">Dimensionando agentes, tipos de modelos, conectores MCP, fundación Cloud/IAM, riesgos y plan BOOST.</p>
+        <p class="text-xs text-gray-500 max-w-md mx-auto">Dimensionando agentes, tipos de modelos, conectores MCP, fundación Cloud/IAM, costo blindado y cronograma BOOST.</p>
       </div>
 
       <div id="reportContainer" class="hidden space-y-6">
 
-        <!-- Resumen Ejecutivo + Supuestos -->
+        <!-- Resumen Ejecutivo + Costo Blindado + Supuestos -->
         <div class="card p-6 border-l-4 border-l-violet-700">
           <div class="flex flex-wrap justify-between items-start gap-4 mb-3">
             <div>
               <span class="text-xs font-bold uppercase tracking-wider text-violet-700" id="lblCliente">CLIENTE</span>
               <h1 class="text-2xl font-bold text-gray-900 mt-0.5" id="lblTituloProyecto">Arquitectura Integral</h1>
             </div>
-            <div class="flex gap-2.5 text-right">
+            <div class="flex flex-wrap gap-2 text-right">
               <div class="bg-gray-50 border rounded-xl px-3 py-2">
-                <div class="text-[10px] text-gray-500">Consultoría + Impl.</div>
+                <div class="text-[10px] text-gray-500">Servicio / Impl.</div>
                 <div class="font-bold text-sm text-gray-900" id="kpiImpl">$0</div>
               </div>
               <div class="bg-violet-50 border border-violet-200 rounded-xl px-3 py-2">
-                <div class="text-[10px] text-violet-700">Consumo + Cloud/Mes</div>
+                <div class="text-[10px] text-violet-700">Consumo / Mes</div>
                 <div class="font-bold text-sm text-violet-900" id="kpiMes">$0/mes</div>
               </div>
+              <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                <div class="text-[10px] text-emerald-700">Consumo Blindado/Mes</div>
+                <div class="font-bold text-sm text-emerald-900" id="kpiBlindadoMes">$0/mes</div>
+              </div>
               <div class="bg-indigo-950 text-white rounded-xl px-3 py-2">
-                <div class="text-[10px] text-indigo-200">TCO Año 1</div>
+                <div class="text-[10px] text-indigo-200">TCO Año 1 (Blindado)</div>
                 <div class="font-bold text-sm" id="kpiTco">$0</div>
               </div>
             </div>
           </div>
           <p class="text-xs text-gray-700 leading-relaxed mb-3" id="lblResumen"></p>
+          <div id="boxCostoBlindado" class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-950 mb-3"></div>
 
           <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs">
             <div class="font-bold text-amber-900 mb-1">📋 Supuestos Técnicos y Datos Pendientes de Confirmar:</div>
@@ -470,13 +480,14 @@
           <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
             <div>
               <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Sección Obligatoria 3 · Topología Acoplada</span>
-              <h2 class="text-lg font-bold">3. Diagrama Interactivo de Arquitectura</h2>
+              <h2 class="text-lg font-bold">3. Diagrama Interactivo de Arquitectura (SVG / PNG)</h2>
             </div>
             <div class="flex items-center gap-1.5 text-xs no-print">
               <button onclick="zoomDiagram('archRender', 0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 +</button>
               <button onclick="zoomDiagram('archRender', -0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 -</button>
               <button onclick="resetZoom('archRender')" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50">100%</button>
               <button onclick="descargarSVG('archRender', 'arquitectura-comptech.svg')" class="px-2.5 py-1 bg-violet-100 text-violet-800 rounded-lg font-semibold">SVG</button>
+              <button onclick="descargarPNG('archRender', 'arquitectura-comptech.png')" class="px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded-lg font-semibold">PNG</button>
             </div>
           </div>
 
@@ -505,6 +516,7 @@
               <button onclick="zoomDiagram('flowRender', -0.15)" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50 font-bold">🔍 -</button>
               <button onclick="resetZoom('flowRender')" class="px-2.5 py-1 border rounded-lg hover:bg-gray-50">100%</button>
               <button onclick="descargarSVG('flowRender', 'flujo-operativo-comptech.svg')" class="px-2.5 py-1 bg-violet-100 text-violet-800 rounded-lg font-semibold">SVG</button>
+              <button onclick="descargarPNG('flowRender', 'flujo-operativo-comptech.png')" class="px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded-lg font-semibold">PNG</button>
             </div>
           </div>
 
@@ -513,11 +525,11 @@
           </div>
         </div>
 
-        <!-- SECCIÓN 5 OBLIGATORIA: Marcos Técnicos y Políticas -->
+        <!-- SECCIÓN 5 OBLIGATORIA: Marcos Técnicos, Seguridad y Procedimientos -->
         <div class="card p-6">
           <div class="mb-4">
-            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Sección Obligatoria 5 · Gobierno & Normativa</span>
-            <h2 class="text-lg font-bold">5. Marcos Técnicos, Políticas de Gobierno IA y Políticas IAM</h2>
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Sección Obligatoria 5 · Gobierno, Procedimientos & Normativa</span>
+            <h2 class="text-lg font-bold">5. Marcos Técnicos, Procedimientos, Políticas de Gobierno IA y Políticas IAM</h2>
           </div>
           <div id="politicasGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
@@ -525,8 +537,8 @@
         <!-- SECCIÓN 6 OBLIGATORIA: Costeo Integral y Comparativa Cloud -->
         <div class="card p-6 space-y-5">
           <div>
-            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Sección Obligatoria 6 · FinOps & Dimensionamiento Económico</span>
-            <h2 class="text-lg font-bold">6. Costeo Integral, Consumo y Comparativa Multi-Nube</h2>
+            <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Sección Obligatoria 6 · FinOps & Costo Blindado</span>
+            <h2 class="text-lg font-bold">6. Costeo Integral, Consumo Blindado y Comparativa Multi-Nube</h2>
           </div>
 
           <div id="comparativaCloudGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
@@ -552,11 +564,11 @@
         <div class="card p-6 space-y-5">
           <div>
             <span class="text-xs font-bold uppercase tracking-wider text-violet-700">Sección Obligatoria 7 · Project Management Office · Comptech</span>
-            <h2 class="text-lg font-bold">7. Alcance, Términos de Despliegue, Sugerencias, Riesgos y Tiempos BOOST</h2>
+            <h2 class="text-lg font-bold">7. Alcance, Términos de Despliegue, Sugerencias, Riesgos y Cronograma BOOST</h2>
           </div>
 
           <div class="bg-violet-50 border border-violet-200 rounded-xl p-4 text-xs">
-            <div class="font-bold text-violet-950 mb-1.5">💡 Sugerencias Estratégicas y de Optimización (Arquitecto & PM):</div>
+            <div class="font-bold text-violet-950 mb-1.5">💡 Sugerencias Estratégicas, de Seguridad y de Optimización (Arquitecto & PM):</div>
             <ul id="listaSugerencias" class="list-disc list-inside text-violet-900 space-y-1"></ul>
           </div>
 
@@ -576,7 +588,7 @@
           </div>
 
           <div class="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-xs">
-            <span class="font-bold text-gray-900">📜 Términos de Despliegue, Paso a Producción y Aceptación: </span>
+            <span class="font-bold text-gray-900">📜 Términos de Despliegue, Procedimientos, Paso a Producción y Aceptación: </span>
             <span id="txtTerminosDespliegue" class="text-gray-700"></span>
           </div>
 
@@ -598,13 +610,13 @@
           </div>
 
           <div>
-            <h3 class="font-bold text-xs uppercase text-gray-700 mb-2">⏱️ Tiempos, Hitos y Matriz RACI (Metodología BOOST)</h3>
+            <h3 class="font-bold text-xs uppercase text-gray-700 mb-2">⏱️ Cronograma de Tiempos, Fases, Hitos y Matriz RACI (Metodología BOOST)</h3>
             <div class="overflow-x-auto border border-gray-200 rounded-xl">
               <table class="w-full text-left text-xs border-collapse">
                 <thead class="bg-violet-50 border-b text-violet-950">
                   <tr>
                     <th class="p-3">Fase BOOST</th>
-                    <th class="p-3">Duración</th>
+                    <th class="p-3">Duración / Tiempo</th>
                     <th class="p-3">Entregables Multi-Capa</th>
                     <th class="p-3">Hito Formal</th>
                     <th class="p-3">RACI</th>
@@ -805,6 +817,7 @@
     }
 
     function compilarLevantamientoModular() {
+      const blindajePct = parseFloat(document.getElementById('blindaje_pct')?.value) || 15;
       let texto = `TIPO DE PROYECTO: ${tipoEscenarioActual}\n`;
       texto += `CLIENTE: ${document.getElementById('cli_empresa').value} | USUARIOS: ${document.getElementById('cli_usuarios').value}\n`;
       texto += `CONEXIÓN E IDENTIDAD PRINCIPAL: ${document.getElementById('metodo_conexion_principal').value}\n`;
@@ -819,6 +832,7 @@
       texto += `- Plataformas seleccionadas: ${plataformasSel.length ? plataformasSel.join(' | ') : 'Ninguna marcada'}\n`;
       texto += `- Otras marcas / sistemas del cliente: ${document.getElementById('otras_marcas_cliente')?.value || 'No especificado'}\n`;
       texto += `- Esquema de oferta en Marketplace: ${document.getElementById('modelo_marketplace')?.value || 'Private Offer'} | ${document.getElementById('presupuesto_cloud_mp')?.value || ''}\n`;
+      texto += `- Colchón / Blindaje de consumo mensual configurado: +${blindajePct}%\n`;
 
       if (document.getElementById('chk-agentico').checked) {
         texto += `\n[ESPECIFICACIÓN DETALLADA DE AGENTES IA, MODELOS, CONECTORES Y DIMENSIONAMIENTO]\n`;
@@ -899,6 +913,36 @@
       a.href = URL.createObjectURL(blob); a.download = filename; a.click();
     }
 
+    function descargarPNG(containerId, filename) {
+      const svg = document.getElementById(containerId).querySelector('svg');
+      if (!svg) return alert("No hay diagrama renderizado para exportar a PNG.");
+      const serializer = new XMLSerializer();
+      let svgStr = serializer.serializeToString(svg);
+      if (!svgStr.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        svgStr = svgStr.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const img = new Image();
+      const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = (img.width || 900) * 2;
+        canvas.height = (img.height || 500) * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function(blob) {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      };
+      img.src = url;
+    }
+
     async function renderMermaidSafe(elementId, code, uid) {
       const el = document.getElementById(elementId);
       try {
@@ -953,12 +997,23 @@
     }
 
     async function renderInforme(d) {
+      const blindajePct = parseFloat(document.getElementById('blindaje_pct')?.value) || 15;
+      const consumoMensualBlindado = (d.total_mensual_usd || 0) * (1 + blindajePct / 100);
+      const tcoBlindadoAnio1 = (d.total_implementacion_usd || 0) + (consumoMensualBlindado * 12);
+
       document.getElementById('lblCliente').textContent = `CLIENTE: ${d.cliente_detectado} · ${tipoEscenarioActual.toUpperCase()}`;
       document.getElementById('lblTituloProyecto').textContent = d.titulo_proyecto;
       document.getElementById('lblResumen').textContent = d.resumen_ejecutivo_consultoria;
       document.getElementById('kpiImpl').textContent = fmt(d.total_implementacion_usd);
       document.getElementById('kpiMes').textContent = fmt(d.total_mensual_usd) + '/mes';
-      document.getElementById('kpiTco').textContent = fmt(d.tco_anual_usd);
+      document.getElementById('kpiBlindadoMes').textContent = fmt(consumoMensualBlindado) + '/mes';
+      document.getElementById('kpiTco').textContent = fmt(tcoBlindadoAnio1);
+
+      document.getElementById('boxCostoBlindado').innerHTML = `
+        <b>🛡️ Estructura de Costo Blindado (Servicio vs. Consumo):</b>
+        El costo de <b>Servicio / Implementación</b> es de <b>${fmt(d.total_implementacion_usd)}</b>.
+        El <b>Consumo Mensual Base</b> es de <b>${fmt(d.total_mensual_usd)}/mes</b> y, con un <b>blindaje / colchón FinOps del +${blindajePct}%</b> para picos de uso o crecimiento, queda blindado en <b>${fmt(consumoMensualBlindado)}/mes</b> (TCO Año 1 blindado: <b>${fmt(tcoBlindadoAnio1)}</b>).
+      `;
 
       const supuestos = d.supuestos_y_datos_por_validar || [];
       document.getElementById('listaSupuestos').innerHTML = supuestos.length
@@ -1009,7 +1064,7 @@
       `).join('');
       filtrarCapa('Todas');
 
-      // 5. Marcos y Políticas
+      // 5. Marcos, Seguridad y Procedimientos
       document.getElementById('politicasGrid').innerHTML = d.marcos_y_politicas_entregables.map(p => `
         <div class="border border-violet-200 bg-violet-50/40 rounded-xl p-4 text-xs">
           <div class="flex justify-between items-center mb-1">
@@ -1098,6 +1153,7 @@
       `;
 
       document.getElementById('reportContainer').classList.remove('hidden');
+      document.getElementById('btnDoc').classList.remove('hidden');
       document.getElementById('btnPdf').classList.remove('hidden');
       document.getElementById('btnMd').classList.remove('hidden');
     }
@@ -1121,6 +1177,57 @@
           </div>
         </div>
       `).join('');
+    }
+
+    function exportarDoc() {
+      if (!informeActual) return;
+      const d = informeActual;
+      const blindajePct = parseFloat(document.getElementById('blindaje_pct')?.value) || 15;
+      const consumoBlindado = (d.total_mensual_usd || 0) * (1 + blindajePct / 100);
+      const tcoBlindado = (d.total_implementacion_usd || 0) + (consumoBlindado * 12);
+
+      const agentesHtml = (d.diseno_agentes_y_automatizacion || []).map(a => `
+        <p><b>${a.nombre_agente}</b> (Riesgo: ${a.nivel_riesgo_ia} | Dimensionamiento: ${a.consumo_estimado_mes})<br>
+        Propósito: ${a.proposito_negocio}<br>
+        Automatización: ${a.flujo_automatizacion_proceso}<br>
+        Modelos y Conectores: ${a.modelo_ia_y_herramientas}</p>
+      `).join('');
+
+      const cronogramaHtml = (d.cronograma_pm_boost || []).map(f => `
+        <tr>
+          <td><b>${f.fase_boost}</b></td>
+          <td>${f.duracion}</td>
+          <td>${(f.entregables_multi_capa || []).join(' · ')}</td>
+          <td>${f.hito_formal}</td>
+          <td>${f.responsables_raci}</td>
+        </tr>
+      `).join('');
+
+      const htmlDoc = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>${d.titulo_proyecto}</title></head>
+        <body style="font-family: Arial, sans-serif; color: #111827; line-height: 1.5;">
+          <h1>${d.titulo_proyecto}</h1>
+          <p><b>Cliente:</b> ${d.cliente_detectado} | <b>Consultora:</b> Comptech</p>
+          <p>${d.resumen_ejecutivo_consultoria}</p>
+          <h2>Resumen de Inversión y Costo Blindado</h2>
+          <p><b>Servicio / Implementación:</b> ${fmt(d.total_implementacion_usd)} | <b>Consumo Base/Mes:</b> ${fmt(d.total_mensual_usd)}/mes | <b>Consumo Blindado (+${blindajePct}%):</b> ${fmt(consumoBlindado)}/mes | <b>TCO Año 1 Blindado:</b> ${fmt(tcoBlindado)}</p>
+          <h2>1. Agentes IA, Modelos, Conectores y Dimensionamiento</h2>
+          ${agentesHtml}
+          <h2>2. Cronograma de Tiempos y Fases de Implementación</h2>
+          <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; font-size: 11px;">
+            <thead><tr><th>Fase</th><th>Duración / Tiempo</th><th>Entregables</th><th>Hito</th><th>RACI</th></tr></thead>
+            <tbody>${cronogramaHtml}</tbody>
+          </table>
+          <h2>3. Términos, Seguridad y Procedimientos</h2>
+          <p>${d.alcance_terminos_y_sugerencias?.terminos_despliegue_y_entrega || ''}</p>
+        </body></html>`;
+
+      const blob = new Blob(['\ufeff' + htmlDoc], { type: 'application/msword' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Informe-Comptech-${(d.cliente_detectado || 'Proyecto').replace(/\s+/g, '-')}.doc`;
+      a.click();
     }
 
     function exportarMarkdown() {
