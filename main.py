@@ -34,7 +34,10 @@ PRECIOS_LISTA_MULTI_CAPA = {
         "Ciberseguridad_DLP_WAF_mes": 120.0,
         "IA_LLM_Input_1M_tokens": 0.15,
         "IA_LLM_Output_1M_tokens": 0.60,
-        "Vector_DB_RAG_mes": 140.0
+        "Vector_DB_RAG_mes": 140.0,
+        "Wasabi_Hot_Storage_TB_mes": 7.0,
+        "CrowdStrike_Falcon_Endpoint_mes": 12.0,
+        "Plataforma_360_MSP_Suite_mes": 180.0
     },
     "AWS": {
         "Almacenamiento_DataWarehouse_TB_mes": 30.0,
@@ -45,7 +48,10 @@ PRECIOS_LISTA_MULTI_CAPA = {
         "Ciberseguridad_DLP_WAF_mes": 135.0,
         "IA_LLM_Input_1M_tokens": 0.25,
         "IA_LLM_Output_1M_tokens": 1.25,
-        "Vector_DB_RAG_mes": 165.0
+        "Vector_DB_RAG_mes": 165.0,
+        "Wasabi_Hot_Storage_TB_mes": 7.0,
+        "CrowdStrike_Falcon_Endpoint_mes": 12.0,
+        "Plataforma_360_MSP_Suite_mes": 180.0
     },
     "Azure": {
         "Almacenamiento_DataWarehouse_TB_mes": 28.0,
@@ -56,7 +62,10 @@ PRECIOS_LISTA_MULTI_CAPA = {
         "Ciberseguridad_DLP_WAF_mes": 130.0,
         "IA_LLM_Input_1M_tokens": 0.20,
         "IA_LLM_Output_1M_tokens": 0.80,
-        "Vector_DB_RAG_mes": 155.0
+        "Vector_DB_RAG_mes": 155.0,
+        "Wasabi_Hot_Storage_TB_mes": 7.0,
+        "CrowdStrike_Falcon_Endpoint_mes": 12.0,
+        "Plataforma_360_MSP_Suite_mes": 180.0
     }
 }
 
@@ -126,7 +135,7 @@ class AlcanceYTerminosPM(BaseModel):
     excluye_del_alcance: List[str]
     prerequisitos_cliente: List[str]
     terminos_despliegue_y_entrega: str
-    sugerencias_estrategicas_consultor: List[str] = Field(description="Recomendaciones proactivas de arquitectura, modelos, conectores, dimensionamiento y optimización de costos")
+    sugerencias_estrategicas_consultor: List[str] = Field(description="Recomendaciones proactivas de arquitectura, modelos, conectores, dimensionamiento, Wasabi/CrowdStrike/360 MSP, oferta en Cloud Marketplace y optimización de costos")
 
 class ComparativaProveedor(BaseModel):
     proveedor: str
@@ -206,7 +215,7 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
         raise HTTPException(status_code=500, detail="Falta configurar GEMINI_API_KEY en Render.")
 
     servicios_txt = "\n".join([
-        f"- {s.nombre} [{s.categoria}]: ${s.precio_unitario_usd} USD / {s.unidad} x {s.cantidad} = ${s.precio_unitario_usd * s.cantidad:.2f} USD"
+        f"- {s.nombre} [{s.categoria}]: ${s.precio_unitario_usd} USD / {s.unidad} x {s.cantidad} =${s.precio_unitario_usd * s.cantidad:.2f} USD"
         for s in req.servicios_comptech
     ])
 
@@ -230,12 +239,11 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
     SERVICIOS COMPTECH (RESPETAR PRECIOS EXACTOS):
     {servicios_txt}
 
-    TARIFARIO LISTA POR CAPA CLOUD (USD):
+    TARIFARIO LISTA POR CAPA CLOUD Y PLATAFORMAS (USD):
     {json.dumps(PRECIOS_LISTA_MULTI_CAPA, indent=2)}
     """
 
     try:
-        # AGENTE 1: Principal Cloud, Landing Zone (Org/Projects/IAM/Network) & AI Systems Engineer
         ingenieria_integral = ejecutar_agente(
             """Eres Principal Cloud & AI Systems Architect en Comptech.
             Explica en lenguaje claro para el negocio y con rigor técnico para ingeniería:
@@ -244,11 +252,11 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
                y el método exacto de conectividad seleccionado (VPN IPsec HA, integración con Google Workspace, Office 365 / Entra ID, o Enlace Dedicado Cloud Interconnect/Direct Connect).
             2) El diseño detallado de cada Agente de IA: propósito de negocio, tipos de modelos IA (razonamiento vs. baja latencia/multimodal), conectores MCP/API/DB exactos,
                flujo de automatización paso a paso, validación Human-in-the-loop y dimensionamiento (ejecuciones/mes, tokens, latencia y costo mensual).
-            3) Dimensionamiento de costos y capacidad de todas las capas acopladas.""",
-            f"Diseña la arquitectura desde fundación hasta agentes IA, modelos, conectores y dimensionamiento:\n{contexto}"
+            3) Integración con Wasabi Hot Cloud Storage, CrowdStrike Falcon, plataformas 360 MSP y otras marcas del cliente, además de cómo estructurar la oferta en el Cloud Marketplace (Private Offer, servicios profesionales, consumo medido e imputación a compromiso cloud).
+            4) Dimensionamiento de costos y capacidad de todas las capas acopladas.""",
+            f"Diseña la arquitectura desde fundación hasta agentes IA, modelos, conectores, terceros y dimensionamiento:\n{contexto}"
         )
 
-        # AGENTE 2: Senior Project Manager (PMP/BOOST) & Director de Consultoría Comptech
         sys_pm_consolidacion = """Eres Senior Project Manager (PMP / Agile BOOST) y Director de Consultoría en Comptech.
         Consolida todo el informe en JSON siguiendo la ESTRUCTURA OBLIGATORIA DE 7 SECCIONES para cada negocio:
         1. 'diseno_agentes_y_automatizacion': propósito en lenguaje claro, tipos de modelos IA y conectores MCP/API exactos, flujo de automatización paso a paso, dimensionamiento mensual y nivel de riesgo. (Si el escenario no incluye IA, incluye al menos 1 propuesta sugerida como fase futura).
@@ -257,7 +265,7 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
         4. 'diagrama_flujo_trabajo_mermaid' en 'sequenceDiagram' mostrando identidad, conectividad, conectores/modelos, automatización y auditoría.
         5. 'marcos_y_politicas_entregables': marcos técnicos y políticas de gobierno IA/IAM.
         6. 'arquitectura_multi_capa' y 'comparativa_proveedores_cloud': dimensionamiento de métricas/licenciamiento y costos respetando exactamente 'servicios_comptech'.
-        7. 'alcance_terminos_y_sugerencias', 'matriz_riesgos_pm' y 'cronograma_pm_boost': alcance, exclusiones, prerrequisitos, términos de despliegue, sugerencias estratégicas, riesgos y fases BOOST."""
+        7. 'alcance_terminos_y_sugerencias', 'matriz_riesgos_pm' y 'cronograma_pm_boost': alcance, exclusiones, prerrequisitos, términos de despliegue, sugerencias estratégicas (incluyendo estrategia de oferta en Cloud Marketplace), riesgos y fases BOOST."""
 
         resultado = ejecutar_agente(
             sys_pm_consolidacion,
@@ -265,7 +273,23 @@ async def generar_consultoria_integral(req: ProyectoConsultoriaRequest):
             schema=InformeConsultoriaIntegral
         )
 
-        return json.loads(resultado)
+        data = json.loads(resultado)
+
+        # Blindaje numérico de totales (Implementación, Mensual y TCO Año 1)
+        impl_componentes = sum(float(c.get("costo_implementacion_usd", 0) or 0) for c in data.get("arquitectura_multi_capa", []))
+        impl_servicios = sum(float(s.precio_unitario_usd * s.cantidad) for s in req.servicios_comptech if "mes" not in s.unidad.lower())
+        mensual_componentes = sum(float(c.get("costo_mensual_usd", 0) or 0) for c in data.get("arquitectura_multi_capa", []))
+        mensual_servicios = sum(float(s.precio_unitario_usd * s.cantidad) for s in req.servicios_comptech if "mes" in s.unidad.lower())
+
+        total_impl = round(max(float(data.get("total_implementacion_usd", 0) or 0), impl_componentes + impl_servicios), 2)
+        total_mes = round(max(float(data.get("total_mensual_usd", 0) or 0), mensual_componentes + mensual_servicios), 2)
+        tco_anual = round(total_impl + (total_mes * 12), 2)
+
+        data["total_implementacion_usd"] = total_impl
+        data["total_mensual_usd"] = total_mes
+        data["tco_anual_usd"] = tco_anual
+
+        return data
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en motor de consultoría Comptech: {str(e)}")
